@@ -8,7 +8,7 @@ export class CobradorService {
     return adminDb();
   }
 
-  // Obtener todos los cobradores desde Firebase
+  // Obtener todos los cobradores desde Firebasee
   async getAllCobradores(periodo: string): Promise<Cobrador[]> {
     try {
       const snapshot = await this.getDb()
