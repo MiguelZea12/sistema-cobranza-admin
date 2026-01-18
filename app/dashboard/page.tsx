@@ -109,13 +109,12 @@ export default function DashboardPage() {
 
       {/* Top Cobradores */}
       {dashboardStats && dashboardStats.topCobradores.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Top Cobradores del Mes</h2>
-            <span className="text-sm text-gray-500">Últimos 30 días</span>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Top Cobradores del Mes</h2>
+            <span className="text-xs sm:text-sm text-gray-500">Últimos 30 días</span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {dashboardStats.topCobradores.map((cobrador, index) => (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{dashboardStats.topCobradores.map((cobrador, index) => (
               <TopCobradorCard
                 key={cobrador.usuario}
                 usuario={cobrador.usuario}
@@ -130,12 +129,12 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Actividad Reciente */}
-        <div className="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-6">
+        <div className="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Actividad Reciente</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Actividad Reciente</h2>
             <button
               onClick={fetchAllData}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               Actualizar
             </button>
@@ -165,8 +164,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Resumen de Formas de Pago */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Resumen de Cobros</h2>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Resumen de Cobros</h2>
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border border-green-200">
               <div className="flex items-center justify-between mb-2">

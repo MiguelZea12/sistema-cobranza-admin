@@ -125,9 +125,9 @@ export default function EncajesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Encajes de Caja</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Encajes de Caja</h1>
           <p className="mt-1 text-sm text-gray-600">
             Historial completo de encajes realizados por los usuarios
           </p>
@@ -138,56 +138,56 @@ export default function EncajesPage() {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Encajes</p>
-              <p className="text-2xl font-bold text-gray-900">{totalEncajes}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Encajes</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalEncajes}</p>
             </div>
-            <Calculator className="h-10 w-10 text-blue-500" />
+            <Calculator className="h-8 sm:h-10 w-8 sm:w-10 text-blue-500" />
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Cobrado</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalCobrado)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Cobrado</p>
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 truncate">{formatCurrency(totalCobrado)}</p>
             </div>
-            <DollarSign className="h-10 w-10 text-green-500" />
+            <DollarSign className="h-8 sm:h-10 w-8 sm:w-10 text-green-500" />
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Sobrante</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSobrante)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Sobrante</p>
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-green-600 truncate">{formatCurrency(totalSobrante)}</p>
             </div>
-            <TrendingUp className="h-10 w-10 text-green-500" />
+            <TrendingUp className="h-8 sm:h-10 w-8 sm:w-10 text-green-500" />
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Faltante</p>
-              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalFaltante)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Faltante</p>
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-red-600 truncate">{formatCurrency(totalFaltante)}</p>
             </div>
-            <TrendingDown className="h-10 w-10 text-red-500" />
+            <TrendingDown className="h-8 sm:h-10 w-8 sm:w-10 text-red-500" />
           </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="h-5 w-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Filtros</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {/* Búsqueda */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -362,57 +362,59 @@ export default function EncajesPage() {
 
           {/* Paginación */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Anterior
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+              <div className="text-sm text-gray-600 order-2 sm:order-1">
+                Mostrando {startIndex + 1} a {Math.min(endIndex, filteredEncajes.length)} de {filteredEncajes.length} encajes
               </div>
+              
+              <div className="flex items-center gap-2 order-1 sm:order-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`hidden sm:block px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
 
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Siguiente
-              </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Siguiente
+                </button>
+              </div>
             </div>
           )}
-
-          <div className="text-center text-sm text-gray-600">
-            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredEncajes.length)} de {filteredEncajes.length} encajes
-          </div>
         </>
       )}
     </div>
