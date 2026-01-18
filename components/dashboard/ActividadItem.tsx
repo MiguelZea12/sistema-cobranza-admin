@@ -68,7 +68,7 @@ export function ActividadItem({
                 </>
               ) : (
                 <>
-                  <span className="font-semibold text-blue-600">{usuario}</span> hizo encaje de caja
+                  <span className="font-semibold text-blue-600">{usuario}</span> hizo arqueo de caja
                   {diferencia !== undefined && diferencia !== 0 && (
                     <span
                       className={`ml-1 text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
