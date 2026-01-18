@@ -1,35 +1,72 @@
 'use client';
 
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { Users, UserCircle, DollarSign, AlertCircle } from 'lucide-react';
+import { TopCobradorCard } from '@/components/dashboard/TopCobradorCard';
+import { ActividadItem } from '@/components/dashboard/ActividadItem';
+import { Users, UserCircle, DollarSign, AlertCircle, TrendingUp, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+interface DashboardStats {
+  totalCobrado: number;
+  totalEfectivo: number;
+  totalTransferencias: number;
+  cantidadCobros: number;
+  topCobradores: Array<{
+    usuario: string;
+    total: number;
+    cantidad: number;
+  }>;
+  totalEncajes: number;
+  encajesConProblemas: number;
+}
+
+interface Actividad {
+  id: string;
+  tipo: 'cobro' | 'encaje';
+  usuario: string;
+  monto: number;
+  clienteNombre?: string;
+  fecha: string;
+  formaPago?: string;
+  diferencia?: number;
+}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
-    cobradores: 0,
     usuarios: 0,
   });
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    fetchAllData();
   }, []);
 
-  const fetchStats = async () => {
+  const fetchAllData = async () => {
     try {
-      const [cobradoresRes, usuariosRes] = await Promise.all([
-        fetch('/api/cobradores?periodo=012'),
-        fetch('/api/usuarios')
+      setLoading(true);
+      
+      const [usuariosRes, statsRes, actividadesRes] = await Promise.all([
+        fetch('/api/usuarios'),
+        fetch('/api/dashboard/stats?periodo=30'),
+        fetch('/api/dashboard/actividades?limit=15')
       ]);
 
-      const cobradores = await cobradoresRes.json();
       const usuarios = await usuariosRes.json();
+      const dashStats = await statsRes.json();
+      const acts = await actividadesRes.json();
 
       setStats({
-        cobradores: Array.isArray(cobradores) ? cobradores.length : 0,
         usuarios: Array.isArray(usuarios) ? usuarios.length : 0,
       });
+
+      setDashboardStats(dashStats);
+      setActividades(acts);
     } catch (error) {
-      console.error('Error cargando estadísticas:', error);
+      console.error('Error cargando datos del dashboard:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,57 +75,161 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Resumen general del sistema de cobranza
+          Resumen general del sistema de cobranza - Últimos 30 días
         </p>
       </div>
 
+      {/* Tarjetas de estadísticas principales */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Clientes"
-          value="0"
-          icon={Users}
-        />
-        <StatsCard
-          title="Total Cobradores"
-          value={stats.cobradores.toString()}
+          title="Total Cobrado"
+          value={`$${dashboardStats?.totalCobrado.toFixed(2) || '0.00'}`}
           icon={DollarSign}
+          description={`${dashboardStats?.cantidadCobros || 0} cobros`}
         />
         <StatsCard
-          title="Usuarios Activos"
-          value={stats.usuarios.toString()}
-          icon={UserCircle}
+          title="Efectivo"
+          value={`$${dashboardStats?.totalEfectivo.toFixed(2) || '0.00'}`}
+          icon={Wallet}
+          description="En efectivo"
         />
         <StatsCard
-          title="Clientes en Mora"
-          value="0"
+          title="Transferencias"
+          value={`$${dashboardStats?.totalTransferencias.toFixed(2) || '0.00'}`}
+          icon={TrendingUp}
+          description="Por transferencia"
+        />
+        <StatsCard
+          title="Encajes"
+          value={dashboardStats?.totalEncajes.toString() || '0'}
           icon={AlertCircle}
+          description={`${dashboardStats?.encajesConProblemas || 0} con diferencias`}
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Top Cobradores */}
+      {dashboardStats && dashboardStats.topCobradores.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h2>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">No hay actividad reciente</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Top Cobradores del Mes</h2>
+            <span className="text-sm text-gray-500">Últimos 30 días</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {dashboardStats.topCobradores.map((cobrador, index) => (
+              <TopCobradorCard
+                key={cobrador.usuario}
+                usuario={cobrador.usuario}
+                total={cobrador.total}
+                cantidad={cobrador.cantidad}
+                rank={index + 1}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Actividad Reciente */}
+        <div className="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Actividad Reciente</h2>
+            <button
+              onClick={fetchAllData}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              Actualizar
+            </button>
+          </div>
+          <div className="space-y-1 max-h-[500px] overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : actividades.length > 0 ? (
+              actividades.map((actividad) => (
+                <ActividadItem
+                  key={actividad.id}
+                  tipo={actividad.tipo}
+                  usuario={actividad.usuario}
+                  monto={actividad.monto}
+                  clienteNombre={actividad.clienteNombre}
+                  fecha={new Date(actividad.fecha)}
+                  formaPago={actividad.formaPago}
+                  diferencia={actividad.diferencia}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-gray-600 text-center py-12">No hay actividad reciente</p>
+            )}
           </div>
         </div>
 
+        {/* Resumen de Formas de Pago */}
         <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Sincronización Automática</h2>
-          <div className="space-y-3">
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-              <p className="text-sm text-blue-800 font-medium mb-2">
-                Servicio Backend Activo
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Resumen de Cobros</h2>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-green-800">Efectivo</span>
+                <Wallet className="w-5 h-5 text-green-700" />
+              </div>
+              <p className="text-2xl font-bold text-green-900">
+                ${dashboardStats?.totalEfectivo.toFixed(2) || '0.00'}
               </p>
-              <p className="text-xs text-blue-600">
-                La sincronización de cobradores, usuarios y clientes se realiza automáticamente cada 5 minutos mediante el servicio backend.
+              <p className="text-xs text-green-700 mt-1">
+                {dashboardStats?.totalEfectivo && dashboardStats?.totalCobrado 
+                  ? ((dashboardStats.totalEfectivo / dashboardStats.totalCobrado) * 100).toFixed(1)
+                  : '0'}% del total
               </p>
             </div>
-            <div className="text-xs text-gray-500 space-y-1">
-              <p>✓ Cobradores: Automático</p>
-              <p>✓ Usuarios: Automático</p>
-              <p>✓ Clientes: Automático</p>
-              <p>✓ Cobros: Automático</p>
+
+            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800">Transferencias</span>
+                <TrendingUp className="w-5 h-5 text-blue-700" />
+              </div>
+              <p className="text-2xl font-bold text-blue-900">
+                ${dashboardStats?.totalTransferencias.toFixed(2) || '0.00'}
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                {dashboardStats?.totalTransferencias && dashboardStats?.totalCobrado 
+                  ? ((dashboardStats.totalTransferencias / dashboardStats.totalCobrado) * 100).toFixed(1)
+                  : '0'}% del total
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Encajes de Caja</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total realizados</span>
+                  <span className="font-semibold text-gray-900">{dashboardStats?.totalEncajes || 0}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Con diferencias</span>
+                  <span className={`font-semibold ${
+                    (dashboardStats?.encajesConProblemas || 0) > 0 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {dashboardStats?.encajesConProblemas || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                  <span className="text-sm text-gray-600">Exactos</span>
+                  <span className="font-semibold text-green-600">
+                    {(dashboardStats?.totalEncajes || 0) - (dashboardStats?.encajesConProblemas || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Personal</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Cobradores activos</span>
+                  <span className="font-semibold text-gray-900">{stats.usuarios}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

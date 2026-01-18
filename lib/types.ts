@@ -84,6 +84,72 @@ export interface DashboardStats {
   saldoVencido: number;
 }
 
+export interface Cobro {
+  id?: string;
+  clienteId: string;
+  clienteCedula: string;
+  clienteNombre: string;
+  contratoId?: string;
+  contratoReferencia?: string;
+  numeroLetra?: number;
+  letrasPagadas?: Array<{ numero: number; monto: number }>;
+  numeroComprobante?: string;
+  monto: number;
+  saldoAnterior: number;
+  saldoNuevo: number;
+  formaPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta';
+  fecha: Date;
+  imageUrl?: string;
+  observaciones?: string;
+  latitude?: number;
+  longitude?: number;
+  createdBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  syncStatus?: 'pending' | 'synced' | 'error';
+  offlineSync?: boolean;
+}
+
+export interface EncajeCaja {
+  id?: string;
+  usuarioNombre: string;
+  fecha: Date;
+  efectivo: number;
+  transferencia: number;
+  totalDeclarado: number;
+  totalCobrado: number;
+  efectivoCobrado: number;
+  transferenciaCobrado: number;
+  diferencia: number;
+  observaciones?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  syncStatus?: 'pending' | 'synced' | 'error';
+}
+
+export interface ActividadReciente {
+  id: string;
+  tipo: 'cobro' | 'encaje';
+  usuario: string;
+  monto: number;
+  clienteNombre?: string;
+  fecha: Date;
+  formaPago?: string;
+  diferencia?: number;
+}
+
+export interface EstadisticasCobros {
+  totalCobrado: number;
+  totalEfectivo: number;
+  totalTransferencias: number;
+  cantidadCobros: number;
+  topCobradores: Array<{
+    usuario: string;
+    total: number;
+    cantidad: number;
+  }>;
+}
+
 export interface AuthUser {
   uid: string;
   email: string;

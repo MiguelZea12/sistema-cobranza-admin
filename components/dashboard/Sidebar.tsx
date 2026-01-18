@@ -7,17 +7,17 @@ import {
   Users, 
   UserCircle, 
   Settings,
-  LogOut,
-  DollarSign
+  Calculator,
+  DollarSign,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Clientes', href: '/dashboard/clientes', icon: Users },
-  { name: 'Cobradores', href: '/dashboard/cobradores', icon: DollarSign },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCircle },
-  { name: 'Configuración', href: '/dashboard/configuracion', icon: Settings },
+  { name: 'Cobros', href: '/dashboard/cobros', icon: DollarSign },
+  { name: 'Encajes', href: '/dashboard/encajes', icon: Calculator },
 ];
 
 export function Sidebar() {

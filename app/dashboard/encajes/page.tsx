@@ -1,0 +1,420 @@
+'use client';
+
+import { Calculator, DollarSign, TrendingUp, TrendingDown, Search, Filter, Calendar, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { EncajeCaja } from '@/lib/types';
+
+const ITEMS_PER_PAGE = 6;
+
+export default function EncajesPage() {
+  const [encajes, setEncajes] = useState<EncajeCaja[]>([]);
+  const [filteredEncajes, setFilteredEncajes] = useState<EncajeCaja[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUsuario, setSelectedUsuario] = useState<string>('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Lista única de usuarios
+  const [usuarios, setUsuarios] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchEncajes();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [encajes, searchTerm, selectedUsuario, fechaInicio, fechaFin]);
+
+  const fetchEncajes = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/encajes');
+      if (!response.ok) throw new Error('Error al cargar encajes');
+      const data = await response.json();
+      setEncajes(data);
+      
+      // Extraer usuarios únicos
+      const uniqueUsuarios = Array.from(new Set(data.map((e: EncajeCaja) => e.usuarioNombre))) as string[];
+      setUsuarios(uniqueUsuarios.sort());
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...encajes];
+
+    // Filtro por búsqueda de texto
+    if (searchTerm) {
+      filtered = filtered.filter(e => 
+        e.usuarioNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.observaciones?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por usuario
+    if (selectedUsuario) {
+      filtered = filtered.filter(e => e.usuarioNombre === selectedUsuario);
+    }
+
+    // Filtro por fecha inicio
+    if (fechaInicio) {
+      filtered = filtered.filter(e => new Date(e.fecha) >= new Date(fechaInicio));
+    }
+
+    // Filtro por fecha fin
+    if (fechaFin) {
+      filtered = filtered.filter(e => new Date(e.fecha) <= new Date(fechaFin));
+    }
+
+    setFilteredEncajes(filtered);
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedUsuario('');
+    setFechaInicio('');
+    setFechaFin('');
+  };
+
+  const formatDate = (date: any) => {
+    if (!date) return '-';
+    let d: Date;
+    if (date?.toDate && typeof date.toDate === 'function') {
+      d = date.toDate();
+    } else if (date?._seconds) {
+      d = new Date(date._seconds * 1000);
+    } else {
+      d = new Date(date);
+    }
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-NI', {
+      style: 'currency',
+      currency: 'NIO'
+    }).format(amount);
+  };
+
+  // Estadísticas
+  const totalEncajes = filteredEncajes.length;
+  const totalSobrante = filteredEncajes.filter(e => e.diferencia > 0).reduce((sum, e) => sum + e.diferencia, 0);
+  const totalFaltante = filteredEncajes.filter(e => e.diferencia < 0).reduce((sum, e) => sum + Math.abs(e.diferencia), 0);
+  const totalCobrado = filteredEncajes.reduce((sum, e) => sum + e.totalCobrado, 0);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredEncajes.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentEncajes = filteredEncajes.slice(startIndex, endIndex);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Encajes de Caja</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Historial completo de encajes realizados por los usuarios
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calculator className="h-8 w-8 text-blue-600" />
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Encajes</p>
+              <p className="text-2xl font-bold text-gray-900">{totalEncajes}</p>
+            </div>
+            <Calculator className="h-10 w-10 text-blue-500" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Cobrado</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalCobrado)}</p>
+            </div>
+            <DollarSign className="h-10 w-10 text-green-500" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Sobrante</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSobrante)}</p>
+            </div>
+            <TrendingUp className="h-10 w-10 text-green-500" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Faltante</p>
+              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalFaltante)}</p>
+            </div>
+            <TrendingDown className="h-10 w-10 text-red-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="h-5 w-5 text-gray-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Búsqueda */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Usuario */}
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <select
+              value={selectedUsuario}
+              onChange={(e) => setSelectedUsuario(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+            >
+              <option value="">Todos los usuarios</option>
+              {usuarios.map(usuario => (
+                <option key={usuario} value={usuario}>{usuario}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Fecha Inicio */}
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Fecha Fin */}
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+
+      {/* Grid de Cards */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600">Error: {error}</p>
+        </div>
+      ) : filteredEncajes.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+          <Calculator className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">No se encontraron encajes</p>
+          <p className="text-gray-500 text-sm mt-2">Prueba ajustando los filtros de búsqueda</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentEncajes.map((encaje) => (
+              <div
+                key={encaje.id}
+                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                {/* Header de la card */}
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-white" />
+                      <h3 className="font-semibold text-white">{encaje.usuarioNombre}</h3>
+                    </div>
+                    <Calculator className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="text-sm text-blue-100 mt-1">{formatDate(encaje.fecha)}</p>
+                </div>
+
+                {/* Contenido */}
+                <div className="p-6 space-y-4">
+                  {/* Total Cobrado */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                    <span className="text-sm text-gray-600">Total Cobrado:</span>
+                    <span className="font-bold text-lg text-gray-900">{formatCurrency(encaje.totalCobrado)}</span>
+                  </div>
+
+                  {/* Detalle efectivo y transferencia */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Efectivo:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.efectivoCobrado)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Transferencia:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.transferenciaCobrado)}</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Declarado:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.totalDeclarado)}</span>
+                    </div>
+                  </div>
+
+                  {/* Diferencia */}
+                  <div className={`rounded-lg p-4 ${
+                    encaje.diferencia > 0 
+                      ? 'bg-green-50 border border-green-200' 
+                      : encaje.diferencia < 0 
+                      ? 'bg-red-50 border border-red-200'
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {encaje.diferencia > 0 ? (
+                          <TrendingUp className="h-5 w-5 text-green-600" />
+                        ) : encaje.diferencia < 0 ? (
+                          <TrendingDown className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <DollarSign className="h-5 w-5 text-gray-600" />
+                        )}
+                        <span className={`font-semibold ${
+                          encaje.diferencia > 0 
+                            ? 'text-green-700' 
+                            : encaje.diferencia < 0 
+                            ? 'text-red-700'
+                            : 'text-gray-700'
+                        }`}>
+                          {encaje.diferencia > 0 ? 'Sobrante' : encaje.diferencia < 0 ? 'Faltante' : 'Exacto'}
+                        </span>
+                      </div>
+                      <span className={`text-lg font-bold ${
+                        encaje.diferencia > 0 
+                          ? 'text-green-600' 
+                          : encaje.diferencia < 0 
+                          ? 'text-red-600'
+                          : 'text-gray-600'
+                      }`}>
+                        {formatCurrency(Math.abs(encaje.diferencia))}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Observaciones */}
+                  {encaje.observaciones && (
+                    <div className="pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 italic">"{encaje.observaciones}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Anterior
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+
+          <div className="text-center text-sm text-gray-600">
+            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredEncajes.length)} de {filteredEncajes.length} encajes
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
