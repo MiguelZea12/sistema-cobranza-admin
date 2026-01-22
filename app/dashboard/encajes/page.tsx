@@ -148,9 +148,9 @@ export default function EncajesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Encajes de Caja</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Arqueos de Caja</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Historial completo de encajes realizados por los usuarios
+            Historial completo de arqueos realizados por los usuarios
           </p>
         </div>
         <div className="flex items-center gap-2">

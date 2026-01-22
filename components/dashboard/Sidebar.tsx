@@ -18,7 +18,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCircle },
   { name: 'Cobros', href: '/dashboard/cobros', icon: DollarSign },
-  { name: 'Encajes', href: '/dashboard/encajes', icon: Calculator },
+  { name: 'Arqueos', href: '/dashboard/encajes', icon: Calculator },
 ];
 
 interface SidebarProps {
