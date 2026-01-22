@@ -100,7 +100,7 @@ export default function DashboardPage() {
           description="Por transferencia"
         />
         <StatsCard
-          title="Encajes"
+          title="Arqueos"
           value={dashboardStats?.totalEncajes.toString() || '0'}
           icon={AlertCircle}
           description={`${dashboardStats?.encajesConProblemas || 0} con diferencias`}
@@ -198,7 +198,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Encajes de Caja</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Arqueos de Caja</h3>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total realizados</span>
