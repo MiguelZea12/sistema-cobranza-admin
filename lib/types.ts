@@ -110,11 +110,31 @@ export interface Cobro {
   offlineSync?: boolean;
 }
 
+// Desglose de billetes y monedas
+export interface DesgloseDenominaciones {
+  billetes: {
+    cien: number;      // $100
+    cincuenta: number; // $50
+    veinte: number;    // $20
+    diez: number;      // $10
+    cinco: number;     // $5
+    uno: number;       // $1
+  };
+  monedas: {
+    cincuenta_centavos: number; // $0.50
+    veinticinco_centavos: number; // $0.25
+    diez_centavos: number; // $0.10
+    cinco_centavos: number; // $0.05
+    un_centavo: number; // $0.01
+  };
+}
+
 export interface EncajeCaja {
   id?: string;
   usuarioNombre: string;
   fecha: Date;
   efectivo: number;
+  desglose?: DesgloseDenominaciones; // Desglose de billetes y monedas (opcional para compatibilidad)
   transferencia: number;
   totalDeclarado: number;
   totalCobrado: number;

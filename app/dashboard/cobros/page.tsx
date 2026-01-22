@@ -79,18 +79,39 @@ export default function CobrosPage() {
       filtered = filtered.filter(c => c.formaPago === selectedFormaPago);
     }
 
-    // Filtro por fecha inicio
+    // Filtro por fecha inicio (desde las 00:00:00)
     if (fechaInicio) {
-      filtered = filtered.filter(c => new Date(c.fecha) >= new Date(fechaInicio));
+      const [year, month, day] = fechaInicio.split('-').map(Number);
+      const inicio = new Date(year, month - 1, day, 0, 0, 0, 0);
+      filtered = filtered.filter(c => {
+        const fechaCobro = normalizarFecha(c.fecha);
+        return fechaCobro >= inicio;
+      });
     }
 
-    // Filtro por fecha fin
+    // Filtro por fecha fin (hasta las 23:59:59)
     if (fechaFin) {
-      filtered = filtered.filter(c => new Date(c.fecha) <= new Date(fechaFin));
+      const [year, month, day] = fechaFin.split('-').map(Number);
+      const fin = new Date(year, month - 1, day, 23, 59, 59, 999);
+      filtered = filtered.filter(c => {
+        const fechaCobro = normalizarFecha(c.fecha);
+        return fechaCobro <= fin;
+      });
     }
 
     setFilteredCobros(filtered);
     setCurrentPage(1);
+  };
+
+  const normalizarFecha = (date: any): Date => {
+    if (!date) return new Date(0);
+    if (date?.toDate && typeof date.toDate === 'function') {
+      return date.toDate();
+    } else if (date?._seconds) {
+      return new Date(date._seconds * 1000);
+    } else {
+      return new Date(date);
+    }
   };
 
   const clearFilters = () => {

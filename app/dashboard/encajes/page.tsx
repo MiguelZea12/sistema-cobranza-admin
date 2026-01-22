@@ -64,18 +64,39 @@ export default function EncajesPage() {
       filtered = filtered.filter(e => e.usuarioNombre === selectedUsuario);
     }
 
-    // Filtro por fecha inicio
+    // Filtro por fecha inicio (desde las 00:00:00)
     if (fechaInicio) {
-      filtered = filtered.filter(e => new Date(e.fecha) >= new Date(fechaInicio));
+      const [year, month, day] = fechaInicio.split('-').map(Number);
+      const inicio = new Date(year, month - 1, day, 0, 0, 0, 0);
+      filtered = filtered.filter(e => {
+        const fechaEncaje = normalizarFecha(e.fecha);
+        return fechaEncaje >= inicio;
+      });
     }
 
-    // Filtro por fecha fin
+    // Filtro por fecha fin (hasta las 23:59:59)
     if (fechaFin) {
-      filtered = filtered.filter(e => new Date(e.fecha) <= new Date(fechaFin));
+      const [year, month, day] = fechaFin.split('-').map(Number);
+      const fin = new Date(year, month - 1, day, 23, 59, 59, 999);
+      filtered = filtered.filter(e => {
+        const fechaEncaje = normalizarFecha(e.fecha);
+        return fechaEncaje <= fin;
+      });
     }
 
     setFilteredEncajes(filtered);
     setCurrentPage(1);
+  };
+
+  const normalizarFecha = (date: any): Date => {
+    if (!date) return new Date(0);
+    if (date?.toDate && typeof date.toDate === 'function') {
+      return date.toDate();
+    } else if (date?._seconds) {
+      return new Date(date._seconds * 1000);
+    } else {
+      return new Date(date);
+    }
   };
 
   const clearFilters = () => {
@@ -300,6 +321,105 @@ export default function EncajesPage() {
                       <span className="text-gray-600">Efectivo:</span>
                       <span className="font-medium text-gray-900">{formatCurrency(encaje.efectivoCobrado)}</span>
                     </div>
+                    
+                    {/* Desglose de billetes y monedas */}
+                    {encaje.desglose && (
+                      <details className="bg-gray-50 rounded-md p-2 mt-1">
+                        <summary className="text-xs font-medium text-gray-600 cursor-pointer hover:text-gray-800">
+                          Ver desglose de efectivo
+                        </summary>
+                        <div className="mt-2 pt-2 border-t border-gray-200 space-y-2">
+                          {/* Billetes */}
+                          {(encaje.desglose.billetes.cien > 0 || encaje.desglose.billetes.cincuenta > 0 || 
+                            encaje.desglose.billetes.veinte > 0 || encaje.desglose.billetes.diez > 0 || 
+                            encaje.desglose.billetes.cinco > 0 || encaje.desglose.billetes.uno > 0) && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Billetes:</p>
+                              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                                {encaje.desglose.billetes.cien > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$100 × {encaje.desglose.billetes.cien}:</span>
+                                    <span className="font-medium">{formatCurrency(100 * encaje.desglose.billetes.cien)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.billetes.cincuenta > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$50 × {encaje.desglose.billetes.cincuenta}:</span>
+                                    <span className="font-medium">{formatCurrency(50 * encaje.desglose.billetes.cincuenta)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.billetes.veinte > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$20 × {encaje.desglose.billetes.veinte}:</span>
+                                    <span className="font-medium">{formatCurrency(20 * encaje.desglose.billetes.veinte)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.billetes.diez > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$10 × {encaje.desglose.billetes.diez}:</span>
+                                    <span className="font-medium">{formatCurrency(10 * encaje.desglose.billetes.diez)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.billetes.cinco > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$5 × {encaje.desglose.billetes.cinco}:</span>
+                                    <span className="font-medium">{formatCurrency(5 * encaje.desglose.billetes.cinco)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.billetes.uno > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$1 × {encaje.desglose.billetes.uno}:</span>
+                                    <span className="font-medium">{formatCurrency(1 * encaje.desglose.billetes.uno)}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Monedas */}
+                          {(encaje.desglose.monedas.cincuenta_centavos > 0 || encaje.desglose.monedas.veinticinco_centavos > 0 || 
+                            encaje.desglose.monedas.diez_centavos > 0 || encaje.desglose.monedas.cinco_centavos > 0 || 
+                            encaje.desglose.monedas.un_centavo > 0) && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Monedas:</p>
+                              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                                {encaje.desglose.monedas.cincuenta_centavos > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$0.50 × {encaje.desglose.monedas.cincuenta_centavos}:</span>
+                                    <span className="font-medium">{formatCurrency(0.50 * encaje.desglose.monedas.cincuenta_centavos)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.monedas.veinticinco_centavos > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$0.25 × {encaje.desglose.monedas.veinticinco_centavos}:</span>
+                                    <span className="font-medium">{formatCurrency(0.25 * encaje.desglose.monedas.veinticinco_centavos)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.monedas.diez_centavos > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$0.10 × {encaje.desglose.monedas.diez_centavos}:</span>
+                                    <span className="font-medium">{formatCurrency(0.10 * encaje.desglose.monedas.diez_centavos)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.monedas.cinco_centavos > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$0.05 × {encaje.desglose.monedas.cinco_centavos}:</span>
+                                    <span className="font-medium">{formatCurrency(0.05 * encaje.desglose.monedas.cinco_centavos)}</span>
+                                  </div>
+                                )}
+                                {encaje.desglose.monedas.un_centavo > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$0.01 × {encaje.desglose.monedas.un_centavo}:</span>
+                                    <span className="font-medium">{formatCurrency(0.01 * encaje.desglose.monedas.un_centavo)}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                    
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Transferencia:</span>
                       <span className="font-medium text-gray-900">{formatCurrency(encaje.transferenciaCobrado)}</span>

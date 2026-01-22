@@ -9,7 +9,14 @@ export async function GET(request: NextRequest) {
     const fechaInicio = searchParams.get('fechaInicio');
     const fechaFin = searchParams.get('fechaFin');
 
-    let query = adminDb().collection('encajes_caja').orderBy('fecha', 'desc');
+    // Verificar que Firebase Admin esté configurado
+    const db = adminDb();
+    if (!db) {
+      console.error('Firebase Admin no está configurado correctamente');
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
+
+    let query = db.collection('encajes_caja').orderBy('fecha', 'desc');
 
     // Filtrar por usuario si se proporciona
     if (usuario) {
