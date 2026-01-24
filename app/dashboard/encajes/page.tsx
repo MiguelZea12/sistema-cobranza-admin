@@ -377,12 +377,18 @@ export default function EncajesPage() {
                           )}
                           
                           {/* Monedas */}
-                          {(encaje.desglose.monedas.cincuenta_centavos > 0 || encaje.desglose.monedas.veinticinco_centavos > 0 || 
+                          {(encaje.desglose.monedas.un_dolar > 0 || encaje.desglose.monedas.cincuenta_centavos > 0 || encaje.desglose.monedas.veinticinco_centavos > 0 || 
                             encaje.desglose.monedas.diez_centavos > 0 || encaje.desglose.monedas.cinco_centavos > 0 || 
                             encaje.desglose.monedas.un_centavo > 0) && (
                             <div>
                               <p className="text-xs font-semibold text-gray-700 mb-1">Monedas:</p>
                               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                                {encaje.desglose.monedas.un_dolar > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">$1.00 × {encaje.desglose.monedas.un_dolar}:</span>
+                                    <span className="font-medium">{formatCurrency(1.00 * encaje.desglose.monedas.un_dolar)}</span>
+                                  </div>
+                                )}
                                 {encaje.desglose.monedas.cincuenta_centavos > 0 && (
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">$0.50 × {encaje.desglose.monedas.cincuenta_centavos}:</span>

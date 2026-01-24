@@ -121,6 +121,7 @@ export interface DesgloseDenominaciones {
     uno: number;       // $1
   };
   monedas: {
+    un_dolar: number; // $1.00
     cincuenta_centavos: number; // $0.50
     veinticinco_centavos: number; // $0.25
     diez_centavos: number; // $0.10
