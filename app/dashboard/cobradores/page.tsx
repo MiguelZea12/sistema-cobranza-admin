@@ -1,7 +1,8 @@
 'use client';
 
-import { Trash2, Plus, Edit } from 'lucide-react';
+import { Trash2, Plus, Edit, Map } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Cobrador } from '@/lib/types';
 
 export default function CobradoresPage() {
@@ -163,6 +164,13 @@ export default function CobradoresPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
+                        <Link
+                          href={`/dashboard/tracking/${cobrador.id}`}
+                          className="text-green-600 hover:text-green-800"
+                          title="Ver tracking"
+                        >
+                          <Map className="h-4 w-4" />
+                        </Link>
                         <button
                           onClick={() => handleEdit(cobrador)}
                           className="text-blue-600 hover:text-blue-800"

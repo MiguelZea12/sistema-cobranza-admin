@@ -4,19 +4,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
-  Users, 
   UserCircle, 
   Settings,
   Calculator,
   DollarSign,
   LogOut,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCircle },
+  { name: 'Tracking Rutas', href: '/dashboard/tracking', icon: MapPin },
   { name: 'Cobros', href: '/dashboard/cobros', icon: DollarSign },
   { name: 'Arqueos', href: '/dashboard/encajes', icon: Calculator },
 ];

@@ -3,8 +3,9 @@
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { TopCobradorCard } from '@/components/dashboard/TopCobradorCard';
 import { ActividadItem } from '@/components/dashboard/ActividadItem';
-import { Users, UserCircle, DollarSign, AlertCircle, TrendingUp, Wallet } from 'lucide-react';
+import { Users, UserCircle, DollarSign, AlertCircle, TrendingUp, Wallet, MapPin, Navigation } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface DashboardStats {
   totalCobrado: number;
@@ -126,6 +127,40 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Tarjeta de Tracking GPS - Nuevo */}
+      <Link href="/dashboard/tracking" className="block">
+        <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6 hover:shadow-lg transition-all cursor-pointer group">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-blue-900">Tracking GPS</h2>
+              </div>
+              <p className="text-blue-700 mb-4">
+                Visualiza las rutas de tus cobradores en tiempo real y revisa su recorrido diario
+              </p>
+              <div className="flex items-center gap-4 text-sm text-blue-800">
+                <div className="flex items-center gap-1">
+                  <Navigation className="w-4 h-4" />
+                  <span>Rutas en tiempo real</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Todo el día</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </Link>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Actividad Reciente */}
