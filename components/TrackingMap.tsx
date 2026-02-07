@@ -214,7 +214,14 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<TrackingSession | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
+  // Marcar que el componente está montado (solo en cliente)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Cargar datos del tracking
   useEffect(() => {
     const loadTracking = async () => {
       try {
@@ -229,7 +236,6 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
         if (data.success) {
           setSession(data.data);
           onDataLoaded?.(data.data);
-          renderMap(data.data);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Error al cargar tracking';
@@ -243,13 +249,40 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
     loadTracking();
   }, [sessionId, onDataLoaded]);
 
+  // Renderizar mapa cuando haya datos y esté montado
+  useEffect(() => {
+    if (!isMounted || !session || loading) return;
+    
+    // Usar setTimeout para asegurar que el DOM está completamente listo
+    const timer = setTimeout(() => {
+      renderMap(session);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [session, isMounted, loading]);
+
   const renderMap = async (trackingData: TrackingSession) => {
     if (!mapContainerRef.current) {
-      console.error('Contenedor de mapa no disponible');
+      console.error('❌ Contenedor de mapa no disponible', {
+        ref: mapContainerRef.current,
+      });
+      return;
+    }
+
+    // Verificar que el elemento tiene dimensiones
+    const containerElement = mapContainerRef.current as HTMLDivElement;
+    if (containerElement.offsetHeight === 0) {
+      console.error('❌ Contenedor sin altura. Reintentando...', {
+        offsetHeight: containerElement.offsetHeight,
+        className: containerElement.className,
+      });
+      // Reintentar en 500ms
+      setTimeout(() => renderMap(trackingData), 500);
       return;
     }
 
     try {
+      console.log('✅ Renderizando mapa con Leaflet...');
       // @ts-ignore - Leaflet se carga dinámicamente
       const L = (await import('leaflet')).default;
 
@@ -266,12 +299,13 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
       }
 
       const center = trackingData.points[Math.floor(trackingData.points.length / 2)];
-      const map = L.map(mapContainerRef.current).setView(
+      const map = L.map(containerElement).setView(
         [center.latitude, center.longitude],
         15
       );
 
       mapRef.current = map;
+      console.log('✅ Mapa creado exitosamente');
 
       // Agregar tile layer con mejor calidad
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -571,8 +605,14 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
       }, 100);
 
     } catch (err) {
-      console.error('Error cargando mapa:', err);
-      setError('Error al renderizar el mapa');
+      console.error('❌ Error renderizando mapa:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        containerRef: mapContainerRef.current,
+        offsetHeight: (mapContainerRef.current as HTMLDivElement)?.offsetHeight,
+        stack: err instanceof Error ? err.stack : 'No stack',
+      });
+      setError(`Error al renderizar el mapa: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
 
@@ -681,8 +721,16 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
         {/* Mapa */}
         <div
           ref={mapContainerRef}
-          className="w-full h-[500px] rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden"
+          className="w-full rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden bg-gray-100"
+          style={{ height: '500px', minHeight: '500px' }}
+          data-map-container="tracking"
         />
+
+        {/* Estado del Mapa */}
+        <div className="text-xs text-gray-500 flex justify-between items-center">
+          <span>Estado: {isMounted ? '✅ Cliente Montado' : '⏳ Inicializando'}</span>
+          <span>Puntos: {session?.points.length || 0}</span>
+        </div>
 
         {/* Estadísticas Principales - Estilo Life360 */}
         {session && (
