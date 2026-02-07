@@ -701,7 +701,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
       <SimpleCardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>
-            <SimpleCardTitle>📍 Visualización de Ruta - Life360 Style</SimpleCardTitle>
+            <SimpleCardTitle>Visualización de Ruta</SimpleCardTitle>
             <SimpleCardDescription>
               {session && `Sesión ${session.sessionId.slice(-8)}`}
             </SimpleCardDescription>
@@ -728,7 +728,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
 
         {/* Estado del Mapa */}
         <div className="text-xs text-gray-500 flex justify-between items-center">
-          <span>Estado: {isMounted ? '✅ Cliente Montado' : '⏳ Inicializando'}</span>
+          <span>Estado: {isMounted ? 'Cliente Montado' : 'Inicializando'}</span>
           <span>Puntos: {session?.points.length || 0}</span>
         </div>
 
@@ -908,7 +908,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
           <div className="pt-4 border-t-2 bg-gray-50 p-4 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h5 className="font-semibold text-sm text-gray-700 mb-2">📊 Datos de Tracking</h5>
+                <h5 className="font-semibold text-sm text-gray-700 mb-2">Datos de Tracking</h5>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Puntos capturados:</span>
