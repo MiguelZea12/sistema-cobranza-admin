@@ -304,7 +304,7 @@ export default function CobradorTrackingPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
                           <BadgeWithVariant variant="outline">
-                            {session.sessionId.slice(-8)}
+                            {session.sessionId ? session.sessionId.slice(-8) : 'N/A'}
                           </BadgeWithVariant>
                           {!session.endTime && (
                             <BadgeWithVariant className="bg-green-100 text-green-800">
@@ -320,7 +320,7 @@ export default function CobradorTrackingPage() {
                               Hora Inicio
                             </p>
                             <p className="font-semibold">
-                              {formatTime(session.startTime)}
+                              {session.startTime ? formatTime(session.startTime) : 'N/A'}
                             </p>
                           </div>
 
@@ -340,18 +340,18 @@ export default function CobradorTrackingPage() {
                               Distancia
                             </p>
                             <p className="font-semibold">
-                              {session.totalDistance.toFixed(2)} km
+                              {(session.totalDistance || 0).toFixed(2)} km
                             </p>
                           </div>
 
                           <div>
                             <p className="text-gray-600">Puntos</p>
-                            <p className="font-semibold">{session.points.length}</p>
+                            <p className="font-semibold">{(session.points && session.points.length) || 0}</p>
                           </div>
                         </div>
 
                         <p className="text-xs text-gray-500">
-                          Registrado: {formatDate(session.startTime)}
+                          Registrado: {session.startTime ? formatDate(session.startTime) : 'N/A'}
                         </p>
                       </div>
 

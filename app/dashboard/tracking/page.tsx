@@ -32,8 +32,18 @@ export default function TrackingPage() {
       if (!response.ok) throw new Error('Error al cargar cobradores');
       
       const data = await response.json();
-      // Filtrar solo usuarios que son cobradores (cobradores = 1)
-      const cobradoresData = data.filter((u: any) => u.cobradores === 1 || u.cobradores === '1');
+      
+      // Filtrar solo usuarios que son cobradores
+      // Si no existe el campo 'cobradores', mostrar todos los usuarios
+      const cobradoresData = data.filter((u: any) => {
+        // Si tiene el campo cobradores definido, verificar que sea 1
+        if (u.cobradores !== undefined) {
+          return u.cobradores === 1 || u.cobradores === '1';
+        }
+        // Si no tiene el campo cobradores, incluir el usuario (todos son cobradores por defecto)
+        return true;
+      });
+      
       setCobradores(cobradoresData.map((c: any) => ({
         id: c.id,
         codigo: c.codigo || c.codigoUsuario,

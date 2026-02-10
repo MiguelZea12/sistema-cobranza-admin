@@ -1,8 +1,9 @@
 'use client';
 
-import { Calculator, DollarSign, TrendingUp, TrendingDown, Search, Filter, Calendar, User } from 'lucide-react';
+import { Calculator, DollarSign, TrendingUp, TrendingDown, Search, Filter, Calendar, User, Edit2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { EncajeCaja } from '@/lib/types';
+import EditarArqueoModal from '@/components/dashboard/EditarArqueoModal';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -21,6 +22,10 @@ export default function EncajesPage() {
   
   // Lista única de usuarios
   const [usuarios, setUsuarios] = useState<string[]>([]);
+
+  // Estados para modal de edición
+  const [editingEncaje, setEditingEncaje] = useState<EncajeCaja | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchEncajes();
@@ -106,6 +111,41 @@ export default function EncajesPage() {
     setFechaFin('');
   };
 
+  const handleEditEncaje = (encaje: EncajeCaja) => {
+    setEditingEncaje(encaje);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEncaje = (encajeActualizado: EncajeCaja) => {
+    // Actualizar en la lista local
+    setEncajes(prevEncajes =>
+      prevEncajes.map(e => (e.id === encajeActualizado.id ? encajeActualizado : e))
+    );
+    setIsEditModalOpen(false);
+    setEditingEncaje(null);
+  };
+
+  const handleDeleteEncaje = async (encaje: EncajeCaja) => {
+    if (!confirm(`¿Estás seguro de eliminar el arqueo de ${encaje.usuarioNombre}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/encajes/${encaje.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar arqueo');
+      }
+
+      // Remover de la lista local
+      setEncajes(prevEncajes => prevEncajes.filter(e => e.id !== encaje.id));
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   const formatDate = (date: any) => {
     if (!date) return '-';
     let d: Date;
@@ -163,7 +203,7 @@ export default function EncajesPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm text-gray-600">Total Encajes</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Arqueos</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalEncajes}</p>
             </div>
             <Calculator className="h-8 sm:h-10 w-8 sm:w-10 text-blue-500" />
@@ -484,6 +524,23 @@ export default function EncajesPage() {
                       <p className="text-xs text-gray-500 italic">"{encaje.observaciones}"</p>
                     </div>
                   )}
+
+                  {/* Botones de acción */}
+                  <div className="pt-3 border-t border-gray-200 flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditEncaje(encaje)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEncaje(encaje)}
+                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -551,6 +608,19 @@ export default function EncajesPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Modal de edición */}
+      {editingEncaje && (
+        <EditarArqueoModal
+          encaje={editingEncaje}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingEncaje(null);
+          }}
+          onSave={handleSaveEncaje}
+        />
       )}
     </div>
   );
