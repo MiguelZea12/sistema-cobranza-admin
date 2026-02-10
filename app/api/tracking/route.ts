@@ -20,42 +20,37 @@ export async function GET(request: NextRequest) {
     // Si no se especifica fecha, usar hoy
     const dateStr = date || new Date().toISOString().split('T')[0];
     
-    // Crear fechas en UTC ajustadas para UTC-5 (Colombia/Perú)
-    // 00:00 hora local = 05:00 UTC
-    // 23:59 hora local = 04:59 UTC del día siguiente
-    const targetDate = new Date(`${dateStr}T05:00:00.000Z`); // Inicio del día en hora local
-    const endDate = new Date(`${dateStr}T23:59:59.999Z`);   // Fin del día completo
-    endDate.setDate(endDate.getDate() + 1); // Ajustar al día siguiente para UTC-5
-    endDate.setHours(4, 59, 59, 999); // 23:59:59 hora local = 04:59:59 UTC del día siguiente
-
-    console.log('📅 Rango de búsqueda:', targetDate.toISOString(), 'hasta', endDate.toISOString());
-
-    // Consultar Firestore con Admin SDK
     const db = adminDb();
     const trackingRef = db.collection('tracking');
     
-    // Primero ver TODOS los documentos del usuario para debug
-    const allDocs = await trackingRef.where('userId', '==', userId).get();
-    console.log('🔍 Total documentos del usuario (sin filtro fecha):', allDocs.size);
-    allDocs.forEach(doc => {
+    // PRIMERO: Ver TODOS los documentos de tracking para diagnosticar
+    console.log('🔍 === DIAGNÓSTICO DE TRACKING ===');
+    const allTracking = await trackingRef.limit(20).orderBy('startTime', 'desc').get();
+    console.log('📋 Total documentos en tracking:', allTracking.size);
+    allTracking.forEach(doc => {
       const data = doc.data();
-      console.log('  - Doc:', doc.id, 'startTime:', data.startTime?.toDate().toISOString());
+      console.log('  - Doc:', doc.id);
+      console.log('    userId:', data.userId);
+      console.log('    sessionId:', data.sessionId);
+      console.log('    startTime:', data.startTime?.toDate().toISOString());
+      console.log('    points:', data.points?.length || 0);
     });
-    
-    const snapshot = await trackingRef
-      .where('userId', '==', userId)
-      .where('startTime', '>=', Timestamp.fromDate(targetDate))
-      .where('startTime', '<=', Timestamp.fromDate(endDate))
-      .orderBy('startTime', 'desc')
-      .get();
 
-    console.log('📊 Documentos encontrados:', snapshot.size);
+    // SEGUNDO: Buscar por el userId exacto
+    let snapshot = await trackingRef.where('userId', '==', userId).orderBy('startTime', 'desc').get();
+    console.log('📊 Documentos con userId exacto:', snapshot.size);
+
+    // Si no encuentra nada, intentar buscar sin filtro de userId (todos los documentos)
+    if (snapshot.empty) {
+      console.log('⚠️ No se encontró con userId, buscando TODOS los documentos...');
+      snapshot = await trackingRef.orderBy('startTime', 'desc').limit(50).get();
+      console.log('📊 Total documentos (sin filtro):', snapshot.size);
+    }
 
     const sessions: any[] = [];
 
     snapshot.forEach((doc) => {
       const data = doc.data();
-      console.log('📄 Doc:', doc.id, 'startTime:', data.startTime?.toDate());
       sessions.push({
         id: doc.id,
         sessionId: data.sessionId,
@@ -74,6 +69,11 @@ export async function GET(request: NextRequest) {
       success: true,
       data: sessions,
       count: sessions.length,
+      debug: {
+        searchedUserId: userId,
+        date: dateStr,
+        foundWithUserId: snapshot.size > 0,
+      }
     });
   } catch (error) {
     console.error('Error obteniendo tracking:', error);
