@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, Download, MapPin, Clock, AlertTriangle, Gauge, TrendingUp } from 'lucide-react';
+import { Download, MapPin, Clock, AlertTriangle, Gauge, TrendingUp, Zap, AlertOctagon, Rocket, Pause, DollarSign, Timer, Play, Flag } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 interface Card {
@@ -90,7 +90,8 @@ type DrivingEventType =
   | 'PHONE_USE'
   | 'START_TRIP'
   | 'END_TRIP'
-  | 'STATIONARY';
+  | 'STATIONARY'
+  | 'PAYMENT';
 
 interface DrivingEvent {
   type: DrivingEventType;
@@ -99,6 +100,12 @@ interface DrivingEvent {
   longitude: number;
   speed?: number;
   value?: number;
+  metadata?: {
+    clienteNombre?: string;
+    montoPagado?: number;
+    formaPago?: 'efectivo' | 'transferencia';
+    numeroComprobante?: string;
+  };
 }
 
 interface TrackingPoint {
@@ -127,7 +134,7 @@ interface TrackingSession {
 }
 
 interface TrackingMapProps {
-  sessionId: string;
+  session: TrackingSession; // Recibir sesión completa en lugar de hacer fetch
   onDataLoaded?: (session: TrackingSession) => void;
 }
 
@@ -245,13 +252,12 @@ const filterStationaryNoise = (points: TrackingPoint[]): TrackingPoint[] => {
   return filtered;
 };
 
-export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoaded }) => {
+export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, onDataLoaded }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<TrackingSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const session = sessionProp; // Usar la sesión recibida directamente
 
   // Marcar que el componente está montado (solo en cliente)
   useEffect(() => {
@@ -272,37 +278,16 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
     };
   }, []);
 
-  // Cargar datos del tracking
+  // Notificar datos cargados (ya vienen como prop)
   useEffect(() => {
-    const loadTracking = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/tracking/${sessionId}`);
-        
-        if (!response.ok) {
-          throw new Error('No se pudo obtener el tracking');
-        }
+    if (session && onDataLoaded) {
+      onDataLoaded(session);
+    }
+  }, [session, onDataLoaded]);
 
-        const data = await response.json();
-        if (data.success) {
-          setSession(data.data);
-          onDataLoaded?.(data.data);
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Error al cargar tracking';
-        setError(message);
-        console.error('Error:', message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTracking();
-  }, [sessionId, onDataLoaded]);
-
-  // Renderizar mapa cuando haya datos y esté montado
+  // Renderizar mapa cuando esté montado
   useEffect(() => {
-    if (!isMounted || !session || loading) return;
+    if (!isMounted || !session) return;
     
     let isCancelled = false;
 
@@ -436,7 +421,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
           L.marker([start.latitude, start.longitude], { icon: startIcon })
             .bindPopup(`
               <div style="min-width: 150px;">
-                <strong style="color: #10b981;">🚀 Inicio</strong><br/>
+                <strong style="color: #10b981;">▶ Inicio</strong><br/>
                 <small>${new Date(start.timestamp).toLocaleString()}</small>
               </div>
             `)
@@ -471,7 +456,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
           L.marker([end.latitude, end.longitude], { icon: endIcon })
             .bindPopup(`
               <div style="min-width: 150px;">
-                <strong style="color: #ef4444;">🏁 Fin</strong><br/>
+                <strong style="color: #ef4444;">■ Fin</strong><br/>
                 <small>${new Date(end.timestamp).toLocaleString()}</small>
               </div>
             `)
@@ -505,7 +490,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
               `;
               popupContent = `
                 <div style="min-width: 180px;">
-                  <strong style="color: ${iconColor};">⚠️ Exceso de Velocidad</strong><br/>
+                  <strong style="color: ${iconColor};">⚡ Exceso de Velocidad</strong><br/>
                   <small>Velocidad: ${event.speed?.toFixed(0)} km/h</small><br/>
                   <small>${new Date(event.timestamp).toLocaleTimeString()}</small>
                 </div>
@@ -531,7 +516,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
               `;
               popupContent = `
                 <div style="min-width: 180px;">
-                  <strong style="color: ${iconColor};">🛑 Frenado Brusco</strong><br/>
+                  <strong style="color: ${iconColor};">! Frenado Brusco</strong><br/>
                   <small>Intensidad: ${event.value?.toFixed(1)} m/s²</small><br/>
                   <small>${new Date(event.timestamp).toLocaleTimeString()}</small>
                 </div>
@@ -557,7 +542,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
               `;
               popupContent = `
                 <div style="min-width: 180px;">
-                  <strong style="color: ${iconColor};">🚀 Aceleración Rápida</strong><br/>
+                  <strong style="color: ${iconColor};">↑ Aceleración Rápida</strong><br/>
                   <small>Aceleración: ${event.value?.toFixed(1)} m/s²</small><br/>
                   <small>${new Date(event.timestamp).toLocaleTimeString()}</small>
                 </div>
@@ -583,7 +568,37 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
               `;
               popupContent = `
                 <div style="min-width: 150px;">
-                  <strong style="color: ${iconColor};">📍 Detenido</strong><br/>
+                  <strong style="color: ${iconColor};">⏸ Detenido</strong><br/>
+                  <small>${new Date(event.timestamp).toLocaleTimeString()}</small>
+                </div>
+              `;
+              break;
+              
+            case 'PAYMENT':
+              iconColor = '#10b981';
+              iconHtml = `
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  background: ${iconColor};
+                  border-radius: 50%;
+                  border: 3px solid white;
+                  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 18px;
+                  font-weight: bold;
+                ">$</div>
+              `;
+              popupContent = `
+                <div style="min-width: 200px;">
+                  <strong style="color: ${iconColor};">$ Pago Registrado</strong><br/>
+                  ${event.metadata?.clienteNombre ? `<small><strong>Cliente:</strong> ${event.metadata.clienteNombre}</small><br/>` : ''}
+                  ${event.value ? `<small><strong>Monto:</strong> $${event.value.toFixed(2)}</small><br/>` : ''}
+                  ${event.metadata?.formaPago ? `<small><strong>Forma:</strong> ${event.metadata.formaPago}</small><br/>` : ''}
+                  ${event.metadata?.numeroComprobante ? `<small><strong>Comprobante:</strong> ${event.metadata.numeroComprobante}</small><br/>` : ''}
                   <small>${new Date(event.timestamp).toLocaleTimeString()}</small>
                 </div>
               `;
@@ -638,7 +653,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
 
           const tooltipContent = `
             <div style="text-align:center; min-width:140px; padding:4px;">
-              <div style="font-weight:700; font-size:14px; color:#dc2626; margin-bottom:4px;">🛑 Parada #${idx + 1}</div>
+              <div style="font-weight:700; font-size:14px; color:#dc2626; margin-bottom:4px;">⏱ Parada #${idx + 1}</div>
               <div style="font-size:22px; font-weight:800; color:#111;">${durText}</div>
               <div style="margin-top:4px; font-size:12px; color:#555;">
                 ${formatTime(stop.arrivedAt)} → ${formatTime(stop.departedAt)}
@@ -655,7 +670,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
             })
             .bindPopup(`
               <div style="min-width:180px;">
-                <strong style="color:#dc2626;">🛑 Parada #${idx + 1}</strong><br/>
+                <strong style="color:#dc2626;">⏱ Parada #${idx + 1}</strong><br/>
                 <div style="margin:6px 0;">
                   <strong style="font-size:16px;">${durText}</strong> detenido
                 </div>
@@ -700,7 +715,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
       isCancelled = true;
       cleanupMap();
     };
-  }, [isMounted, session, loading]);
+  }, [isMounted, session]);
 
   const downloadGPX = () => {
     if (!session || session.points.length === 0) return;
@@ -752,35 +767,6 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
-
-  if (loading) {
-    return (
-      <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle>Visualización de Ruta</SimpleCardTitle>
-        </SimpleCardHeader>
-        <SimpleCardContent className="flex items-center justify-center h-96">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <p className="text-gray-600">Cargando ruta...</p>
-          </div>
-        </SimpleCardContent>
-      </SimpleCard>
-    );
-  }
-
-  if (error) {
-    return (
-      <SimpleCard>
-        <SimpleCardHeader>
-          <SimpleCardTitle>Visualización de Ruta</SimpleCardTitle>
-        </SimpleCardHeader>
-        <SimpleCardContent className="flex items-center justify-center h-96">
-          <p className="text-red-600">{error}</p>
-        </SimpleCardContent>
-      </SimpleCard>
-    );
-  }
 
   return (
     <SimpleCard>
@@ -875,7 +861,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                 let bgColor = 'bg-gray-50';
                 let borderColor = 'border-gray-300';
                 let textColor = 'text-gray-700';
-                let icon = '📍';
+                let IconComponent = MapPin;
                 let title = 'Evento';
                 let detail = '';
 
@@ -884,7 +870,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                     bgColor = 'bg-red-50';
                     borderColor = 'border-red-300';
                     textColor = 'text-red-700';
-                    icon = '⚡';
+                    IconComponent = Zap;
                     title = 'Exceso de Velocidad';
                     detail = `${event.speed?.toFixed(0)} km/h`;
                     break;
@@ -892,7 +878,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                     bgColor = 'bg-amber-50';
                     borderColor = 'border-amber-300';
                     textColor = 'text-amber-700';
-                    icon = '🛑';
+                    IconComponent = AlertOctagon;
                     title = 'Frenado Brusco';
                     detail = `${event.value?.toFixed(1)} m/s²`;
                     break;
@@ -900,7 +886,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                     bgColor = 'bg-blue-50';
                     borderColor = 'border-blue-300';
                     textColor = 'text-blue-700';
-                    icon = '🚀';
+                    IconComponent = Rocket;
                     title = 'Aceleración Rápida';
                     detail = `${event.value?.toFixed(1)} m/s²`;
                     break;
@@ -908,9 +894,17 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                     bgColor = 'bg-purple-50';
                     borderColor = 'border-purple-300';
                     textColor = 'text-purple-700';
-                    icon = '⏸️';
+                    IconComponent = Pause;
                     title = 'Detenido';
                     detail = 'Sin movimiento';
+                    break;
+                  case 'PAYMENT':
+                    bgColor = 'bg-green-50';
+                    borderColor = 'border-green-300';
+                    textColor = 'text-green-700';
+                    IconComponent = DollarSign;
+                    title = 'Pago Registrado';
+                    detail = event.value ? `$${event.value.toFixed(2)}` : '';
                     break;
                 }
 
@@ -920,7 +914,9 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                     className={`${bgColor} ${borderColor} border-2 p-3 rounded-lg`}
                   >
                     <div className="flex items-start gap-2">
-                      <span className="text-2xl">{icon}</span>
+                      <div className={`${textColor}`}>
+                        <IconComponent className="w-6 h-6" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className={`font-semibold text-sm ${textColor}`}>
                           {title}
@@ -953,7 +949,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
           return (
             <div className="pt-4 border-t-2">
               <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span className="text-2xl">🛑</span>
+                <Timer className="w-5 h-5 text-red-600" />
                 Puntos de Parada ({stops.length})
                 <span className="ml-auto text-sm font-normal text-gray-500">
                   Total detenido: {totalStopMin >= 60 ? `${Math.floor(totalStopMin/60)}h ${totalStopMin%60}m` : `${totalStopMin} min`}
@@ -970,8 +966,8 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ sessionId, onDataLoade
                       className="bg-red-50 border-2 border-red-300 p-4 rounded-xl"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white text-xl shadow-md">
-                          ⏱
+                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-md">
+                          <Timer className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
                           <p className="font-bold text-red-800 text-lg">Parada #{idx + 1}</p>

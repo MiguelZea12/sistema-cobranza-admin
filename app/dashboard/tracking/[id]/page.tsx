@@ -113,7 +113,7 @@ export default function CobradorTrackingPage() {
   const [sessions, setSessions] = useState<TrackingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<any | null>(null); // Guardar objeto completo
   const [date, setDate] = useState(dateParam || new Date().toISOString().split('T')[0]);
   const [cobradorInfo, setCobradorInfo] = useState<{ nombre: string; codigo: string } | null>(null);
 
@@ -242,7 +242,7 @@ export default function CobradorTrackingPage() {
       {/* Mostrar mapa si hay una sesión seleccionada */}
       {selectedSession && (
         <>
-          <TrackingMap sessionId={selectedSession} />
+          <TrackingMap session={selectedSession} />
           <Button
             onClick={() => setSelectedSession(null)}
             variant="outline"
@@ -297,7 +297,7 @@ export default function CobradorTrackingPage() {
                 <CardWithClick
                   key={session.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => setSelectedSession(session.id)}
+                  onClick={() => setSelectedSession(session)}
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-between justify-between gap-4">
