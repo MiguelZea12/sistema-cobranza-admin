@@ -771,7 +771,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
   return (
     <SimpleCard>
       <SimpleCardHeader className="pb-3">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
           <div>
             <SimpleCardTitle>Visualización de Ruta</SimpleCardTitle>
             <SimpleCardDescription>
@@ -781,7 +781,7 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
           {session && (
             <SimpleButton
               onClick={downloadGPX}
-              className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+              className="gap-2 bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto"
             >
               <Download className="w-4 h-4 inline" />
               Descargar GPX
@@ -789,12 +789,12 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
           )}
         </div>
       </SimpleCardHeader>
-      <SimpleCardContent className="space-y-6">
+      <SimpleCardContent className="space-y-4 sm:space-y-6">
         {/* Mapa */}
         <div
           ref={mapContainerRef}
           className="w-full rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden bg-gray-100"
-          style={{ height: '500px', minHeight: '500px' }}
+          style={{ height: '400px', minHeight: '300px' }}
           data-map-container="tracking"
         />
 
@@ -806,43 +806,43 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
 
         {/* Estadísticas Principales - Estilo Life360 */}
         {session && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-              <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
-                <Clock className="w-4 h-4" />
-                <span className="font-medium">Duración</span>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-xl border border-blue-200">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-700 mb-2">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <span className="font-medium truncate">Duración</span>
               </div>
-              <p className="font-bold text-2xl text-blue-900">
+              <p className="font-bold text-xl sm:text-2xl text-blue-900 truncate">
                 {formatDuration(session.startTime, session.endTime)}
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-              <div className="flex items-center gap-2 text-sm text-purple-700 mb-2">
-                <MapPin className="w-4 h-4" />
-                <span className="font-medium">Distancia</span>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-xl border border-purple-200">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-purple-700 mb-2">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span className="font-medium truncate">Distancia</span>
               </div>
-              <p className="font-bold text-2xl text-purple-900">
+              <p className="font-bold text-xl sm:text-2xl text-purple-900 truncate">
                 {session.totalDistance.toFixed(2)} km
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-              <div className="flex items-center gap-2 text-sm text-green-700 mb-2">
-                <Gauge className="w-4 h-4" />
-                <span className="font-medium">Vel. Máx</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-700 mb-2">
+                <Gauge className="w-4 h-4 flex-shrink-0" />
+                <span className="font-medium truncate">Vel. Máx</span>
               </div>
-              <p className="font-bold text-2xl text-green-900">
+              <p className="font-bold text-xl sm:text-2xl text-green-900 truncate">
                 {session.maxSpeed?.toFixed(0) || 0} km/h
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
-              <div className="flex items-center gap-2 text-sm text-orange-700 mb-2">
-                <TrendingUp className="w-4 h-4" />
-                <span className="font-medium">Vel. Prom</span>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-xl border border-orange-200">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-orange-700 mb-2">
+                <TrendingUp className="w-4 h-4 flex-shrink-0" />
+                <span className="font-medium truncate">Vel. Prom</span>
               </div>
-              <p className="font-bold text-2xl text-orange-900">
+              <p className="font-bold text-xl sm:text-2xl text-orange-900 truncate">
                 {session.averageSpeed?.toFixed(0) || 0} km/h
               </p>
             </div>
@@ -852,11 +852,11 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
         {/* Panel de Eventos de Conducción */}
         {session && session.events && session.events.length > 0 && (
           <div className="pt-4 border-t-2">
-            <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              Eventos de Conducción ({session.events.length})
+            <h4 className="font-semibold text-base sm:text-lg mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <span className="truncate">Eventos de Conducción ({session.events.length})</span>
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {session.events.map((event, idx) => {
                 let bgColor = 'bg-gray-50';
                 let borderColor = 'border-gray-300';
@@ -948,14 +948,16 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
 
           return (
             <div className="pt-4 border-t-2">
-              <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <Timer className="w-5 h-5 text-red-600" />
-                Puntos de Parada ({stops.length})
-                <span className="ml-auto text-sm font-normal text-gray-500">
+              <h4 className="font-semibold text-base sm:text-lg mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Timer className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <span>Puntos de Parada ({stops.length})</span>
+                </div>
+                <span className="text-sm font-normal text-gray-500 sm:ml-auto">
                   Total detenido: {totalStopMin >= 60 ? `${Math.floor(totalStopMin/60)}h ${totalStopMin%60}m` : `${totalStopMin} min`}
                 </span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stops.map((stop, idx) => {
                   const durText = stop.durationMinutes >= 60
                     ? `${Math.floor(stop.durationMinutes/60)}h ${stop.durationMinutes%60}m`
@@ -963,16 +965,16 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
                   return (
                     <div
                       key={idx}
-                      className="bg-red-50 border-2 border-red-300 p-4 rounded-xl"
+                      className="bg-red-50 border-2 border-red-300 p-3 sm:p-4 rounded-xl"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-md">
-                          <Timer className="w-6 h-6" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-md flex-shrink-0">
+                          <Timer className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <div className="flex-1">
-                          <p className="font-bold text-red-800 text-lg">Parada #{idx + 1}</p>
-                          <p className="font-extrabold text-2xl text-red-900">{durText}</p>
-                          <p className="text-xs text-red-600 mt-1">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-red-800 text-sm sm:text-base truncate">Parada #{idx + 1}</p>
+                          <p className="font-extrabold text-xl sm:text-2xl text-red-900 truncate">{durText}</p>
+                          <p className="text-xs text-red-600 mt-1 truncate">
                             {formatTime(stop.arrivedAt)} → {formatTime(stop.departedAt)}
                           </p>
                         </div>
@@ -988,21 +990,21 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
         {/* Resumen de Puntos y Tiempo */}
         {session && (
           <div className="pt-4 border-t-2 bg-gray-50 p-4 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <h5 className="font-semibold text-sm text-gray-700 mb-2">Datos de Tracking</h5>
                 <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Puntos capturados:</span>
-                    <span className="font-semibold text-gray-900">{session.points.length}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">Puntos capturados:</span>
+                    <span className="font-semibold text-gray-900 flex-shrink-0">{session.points.length}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Eventos detectados:</span>
-                    <span className="font-semibold text-gray-900">{session.events?.length || 0}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">Eventos detectados:</span>
+                    <span className="font-semibold text-gray-900 flex-shrink-0">{session.events?.length || 0}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Paradas (5+ min):</span>
-                    <span className="font-semibold text-gray-900">{detectStopPoints(session.points).length}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">Paradas (5+ min):</span>
+                    <span className="font-semibold text-gray-900 flex-shrink-0">{detectStopPoints(session.points).length}</span>
                   </div>
                 </div>
               </div>
@@ -1010,16 +1012,16 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
               <div>
                 <h5 className="font-semibold text-sm text-gray-700 mb-2">🕐 Horarios</h5>
                 <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Inicio:</span>
-                    <span className="font-semibold text-gray-900">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">Inicio:</span>
+                    <span className="font-semibold text-gray-900 flex-shrink-0">
                       {new Date(session.startTime).toLocaleTimeString()}
                     </span>
                   </div>
                   {session.endTime && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Fin:</span>
-                      <span className="font-semibold text-gray-900">
+                    <div className="flex justify-between gap-2">
+                      <span className="text-gray-600 truncate">Fin:</span>
+                      <span className="font-semibold text-gray-900 flex-shrink-0">
                         {new Date(session.endTime).toLocaleTimeString()}
                       </span>
                     </div>

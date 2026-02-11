@@ -57,20 +57,20 @@ export default function TrackingPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tracking de Rutas</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tracking de Rutas</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Visualiza las rutas de tus cobradores en tiempo real
           </p>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-4 items-end">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Fecha
@@ -94,7 +94,7 @@ export default function TrackingPage() {
 
       {/* Lista de Cobradores */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Cobradores Activos</h2>
           <p className="text-sm text-gray-600 mt-1">
             Haz clic en un cobrador para ver su ruta del día
@@ -103,16 +103,16 @@ export default function TrackingPage() {
 
         <div className="divide-y divide-gray-200">
           {loading ? (
-            <div className="px-6 py-12 flex flex-col items-center justify-center">
+            <div className="px-4 sm:px-6 py-12 flex flex-col items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
               <p className="text-gray-600">Cargando cobradores...</p>
             </div>
           ) : error ? (
-            <div className="px-6 py-12 text-center">
+            <div className="px-4 sm:px-6 py-12 text-center">
               <p className="text-red-600">{error}</p>
             </div>
           ) : cobradores.length === 0 ? (
-            <div className="px-6 py-12 text-center">
+            <div className="px-4 sm:px-6 py-12 text-center">
               <MapPin className="w-12 h-12 mx-auto text-gray-400 mb-2" />
               <p className="text-gray-600">No hay cobradores registrados</p>
             </div>
@@ -121,24 +121,24 @@ export default function TrackingPage() {
               <Link
                 key={cobrador.id}
                 href={`/dashboard/tracking/${cobrador.id}?date=${selectedDate}`}
-                className="block px-6 py-4 hover:bg-gray-50 transition-colors group"
+                className="block px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors group"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     {/* Avatar/Ícono */}
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      <User className="w-6 h-6 text-blue-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors flex-shrink-0">
+                      <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
 
                     {/* Información del cobrador */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{cobrador.nombre}</h3>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 truncate">{cobrador.nombre}</h3>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 self-start">
                           {cobrador.codigo}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
                           <span>Ver ruta del día</span>
@@ -159,8 +159,8 @@ export default function TrackingPage() {
                   </div>
 
                   {/* Botón de acción */}
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm font-medium text-blue-600 group-hover:text-blue-700">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="hidden sm:block text-sm font-medium text-blue-600 group-hover:text-blue-700">
                       Ver tracking
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />

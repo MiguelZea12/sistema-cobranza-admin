@@ -189,21 +189,21 @@ export default function CobradorTrackingPage() {
   return (
     <>
       
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header con botón de regresar */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <Link
           href="/dashboard/tracking"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
             {cobradorInfo ? `Tracking - ${cobradorInfo.nombre}` : 'Tracking de Ruta'}
           </h1>
           {cobradorInfo && (
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               Código: {cobradorInfo.codigo}
             </p>
           )}
@@ -216,7 +216,7 @@ export default function CobradorTrackingPage() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha
@@ -241,15 +241,16 @@ export default function CobradorTrackingPage() {
 
       {/* Mostrar mapa si hay una sesión seleccionada */}
       {selectedSession && (
-        <>
+        <div className="space-y-4">
           <TrackingMap session={selectedSession} />
           <Button
             onClick={() => setSelectedSession(null)}
             variant="outline"
+            className="w-full sm:w-auto"
           >
             Volver a listado
           </Button>
-        </>
+        </div>
       )}
 
       {/* Listado de rutas */}
@@ -300,9 +301,9 @@ export default function CobradorTrackingPage() {
                   onClick={() => setSelectedSession(session)}
                 >
                   <CardContent className="pt-6">
-                    <div className="flex items-between justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-between sm:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-3 flex-wrap">
                           <BadgeWithVariant variant="outline">
                             {session.sessionId ? session.sessionId.slice(-8) : 'N/A'}
                           </BadgeWithVariant>
@@ -313,39 +314,39 @@ export default function CobradorTrackingPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm mb-3">
                           <div>
-                            <p className="text-gray-600 flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              Hora Inicio
+                            <p className="text-gray-600 flex items-center gap-1 mb-1">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">Hora Inicio</span>
                             </p>
-                            <p className="font-semibold">
+                            <p className="font-semibold truncate">
                               {session.startTime ? formatTime(session.startTime) : 'N/A'}
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-gray-600 flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              Duración
+                            <p className="text-gray-600 flex items-center gap-1 mb-1">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">Duración</span>
                             </p>
-                            <p className="font-semibold">
+                            <p className="font-semibold truncate">
                               {formatDuration(session.startTime, session.endTime)}
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-gray-600 flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              Distancia
+                            <p className="text-gray-600 flex items-center gap-1 mb-1">
+                              <MapPin className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">Distancia</span>
                             </p>
-                            <p className="font-semibold">
+                            <p className="font-semibold truncate">
                               {(session.totalDistance || 0).toFixed(2)} km
                             </p>
                           </div>
 
                           <div>
-                            <p className="text-gray-600">Puntos</p>
+                            <p className="text-gray-600 mb-1">Puntos</p>
                             <p className="font-semibold">{(session.points && session.points.length) || 0}</p>
                           </div>
                         </div>
@@ -355,7 +356,7 @@ export default function CobradorTrackingPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center sm:justify-start">
                         <ChevronRight className="w-5 h-5 text-gray-400" />
                       </div>
                     </div>
