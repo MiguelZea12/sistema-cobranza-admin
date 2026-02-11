@@ -70,24 +70,25 @@ export default function TrackingPage() {
 
       {/* Filtros */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end overflow-hidden">
+          <div className="flex-1 min-w-0 max-w-full">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Fecha
             </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative max-w-xs">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full max-w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-ellipsis"
+                style={{ maxWidth: '100%' }}
               />
             </div>
           </div>
-          <div className="text-sm text-gray-600 flex items-center gap-2">
+          <div className="text-sm text-gray-600 flex items-center gap-2 flex-shrink-0">
             <Clock className="w-4 h-4" />
-            <span>Rutas del día completo</span>
+            <span className="whitespace-nowrap">Rutas del día completo</span>
           </div>
         </div>
       </div>

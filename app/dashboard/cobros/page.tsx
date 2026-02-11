@@ -246,7 +246,7 @@ export default function CobrosPage() {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Filtros</h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 overflow-hidden">
           {/* Búsqueda */}
           <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -304,6 +304,7 @@ export default function CobrosPage() {
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
               className="w-full min-w-0 pl-10 pr-2 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ maxWidth: '100%' }}
             />
           </div>
 
@@ -315,6 +316,7 @@ export default function CobrosPage() {
               value={fechaFin}
               onChange={(e) => setFechaFin(e.target.value)}
               className="w-full min-w-0 pl-10 pr-2 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ maxWidth: '100%' }}
             />
           </div>
         </div>

@@ -31,3 +31,41 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos específicos para iOS */
+@layer utilities {
+  /* Prevenir desbordamiento de inputs de fecha en iOS */
+  input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0.75rem;
+    cursor: pointer;
+  }
+
+  /* Asegurar que los mapas de Leaflet respeten el z-index */
+  .leaflet-container {
+    position: relative;
+    z-index: 0 !important;
+  }
+
+  .leaflet-pane {
+    z-index: auto !important;
+  }
+
+  /* Prevenir scroll horizontal en iOS */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}

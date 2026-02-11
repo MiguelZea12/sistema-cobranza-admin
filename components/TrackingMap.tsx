@@ -793,8 +793,8 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ session: sessionProp, 
         {/* Mapa */}
         <div
           ref={mapContainerRef}
-          className="w-full rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden bg-gray-100"
-          style={{ height: '400px', minHeight: '300px' }}
+          className="w-full rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden bg-gray-100 relative"
+          style={{ height: '400px', minHeight: '300px', maxWidth: '100%', zIndex: 0 }}
           data-map-container="tracking"
         />
 
