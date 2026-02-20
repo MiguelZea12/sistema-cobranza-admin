@@ -27,6 +27,11 @@ export default function EncajesPage() {
   const [editingEncaje, setEditingEncaje] = useState<EncajeCaja | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // Estado para confirmación de eliminación
+  const [deletingEncaje, setDeletingEncaje] = useState<EncajeCaja | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchEncajes();
   }, []);
@@ -126,23 +131,25 @@ export default function EncajesPage() {
   };
 
   const handleDeleteEncaje = async (encaje: EncajeCaja) => {
-    if (!confirm(`¿Estás seguro de eliminar el arqueo de ${encaje.usuarioNombre}?`)) {
-      return;
-    }
+    setDeletingEncaje(encaje);
+    setDeleteError(null);
+  };
 
+  const confirmDelete = async () => {
+    if (!deletingEncaje) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
     try {
-      const response = await fetch(`/api/encajes/${encaje.id}`, {
+      const response = await fetch(`/api/encajes/${deletingEncaje.id}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar arqueo');
-      }
-
-      // Remover de la lista local
-      setEncajes(prevEncajes => prevEncajes.filter(e => e.id !== encaje.id));
+      if (!response.ok) throw new Error('Error al eliminar arqueo');
+      setEncajes(prev => prev.filter(e => e.id !== deletingEncaje.id));
+      setDeletingEncaje(null);
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      setDeleteError(err.message);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -364,121 +371,110 @@ export default function EncajesPage() {
                       <span className="font-medium text-gray-900">{formatCurrency(encaje.efectivoCobrado)}</span>
                     </div>
                     
-                    {/* Desglose de billetes y monedas */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Transferencia:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.transferenciaCobrado)}</span>
+                    </div>
+                    {(encaje.chequeCobrado || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Cheques:</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(encaje.chequeCobrado || 0)}</span>
+                      </div>
+                    )}
+                    {(encaje.tarjetaCobrado || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Tarjeta:</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(encaje.tarjetaCobrado || 0)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Declarado:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.totalDeclarado)}</span>
+                    </div>
+                    {/* Efectivo declarado con desglose */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Efectivo declarado:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(encaje.efectivo)}</span>
+                    </div>
                     {encaje.desglose && (
-                      <details className="bg-gray-50 rounded-md p-2 mt-1">
+                      <details className="bg-gray-50 rounded-md p-2">
                         <summary className="text-xs font-medium text-gray-600 cursor-pointer hover:text-gray-800">
-                          Ver desglose de efectivo
+                          Ver desglose de efectivo declarado
                         </summary>
                         <div className="mt-2 pt-2 border-t border-gray-200 space-y-2">
-                          {/* Billetes */}
-                          {(encaje.desglose.billetes.cien > 0 || encaje.desglose.billetes.cincuenta > 0 || 
-                            encaje.desglose.billetes.veinte > 0 || encaje.desglose.billetes.diez > 0 || 
+                          {(encaje.desglose.billetes.cien > 0 || encaje.desglose.billetes.cincuenta > 0 ||
+                            encaje.desglose.billetes.veinte > 0 || encaje.desglose.billetes.diez > 0 ||
                             encaje.desglose.billetes.cinco > 0 || encaje.desglose.billetes.uno > 0) && (
                             <div>
                               <p className="text-xs font-semibold text-gray-700 mb-1">Billetes:</p>
                               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                                {encaje.desglose.billetes.cien > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$100 × {encaje.desglose.billetes.cien}:</span>
-                                    <span className="font-medium">{formatCurrency(100 * encaje.desglose.billetes.cien)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.billetes.cincuenta > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$50 × {encaje.desglose.billetes.cincuenta}:</span>
-                                    <span className="font-medium">{formatCurrency(50 * encaje.desglose.billetes.cincuenta)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.billetes.veinte > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$20 × {encaje.desglose.billetes.veinte}:</span>
-                                    <span className="font-medium">{formatCurrency(20 * encaje.desglose.billetes.veinte)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.billetes.diez > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$10 × {encaje.desglose.billetes.diez}:</span>
-                                    <span className="font-medium">{formatCurrency(10 * encaje.desglose.billetes.diez)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.billetes.cinco > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$5 × {encaje.desglose.billetes.cinco}:</span>
-                                    <span className="font-medium">{formatCurrency(5 * encaje.desglose.billetes.cinco)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.billetes.uno > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$1 × {encaje.desglose.billetes.uno}:</span>
-                                    <span className="font-medium">{formatCurrency(1 * encaje.desglose.billetes.uno)}</span>
-                                  </div>
-                                )}
+                                {encaje.desglose.billetes.cien > 0 && <div className="flex justify-between"><span className="text-gray-600">$100 × {encaje.desglose.billetes.cien}:</span><span className="font-medium">{formatCurrency(100 * encaje.desglose.billetes.cien)}</span></div>}
+                                {encaje.desglose.billetes.cincuenta > 0 && <div className="flex justify-between"><span className="text-gray-600">$50 × {encaje.desglose.billetes.cincuenta}:</span><span className="font-medium">{formatCurrency(50 * encaje.desglose.billetes.cincuenta)}</span></div>}
+                                {encaje.desglose.billetes.veinte > 0 && <div className="flex justify-between"><span className="text-gray-600">$20 × {encaje.desglose.billetes.veinte}:</span><span className="font-medium">{formatCurrency(20 * encaje.desglose.billetes.veinte)}</span></div>}
+                                {encaje.desglose.billetes.diez > 0 && <div className="flex justify-between"><span className="text-gray-600">$10 × {encaje.desglose.billetes.diez}:</span><span className="font-medium">{formatCurrency(10 * encaje.desglose.billetes.diez)}</span></div>}
+                                {encaje.desglose.billetes.cinco > 0 && <div className="flex justify-between"><span className="text-gray-600">$5 × {encaje.desglose.billetes.cinco}:</span><span className="font-medium">{formatCurrency(5 * encaje.desglose.billetes.cinco)}</span></div>}
+                                {encaje.desglose.billetes.uno > 0 && <div className="flex justify-between"><span className="text-gray-600">$1 × {encaje.desglose.billetes.uno}:</span><span className="font-medium">{formatCurrency(1 * encaje.desglose.billetes.uno)}</span></div>}
                               </div>
                             </div>
                           )}
-                          
-                          {/* Monedas */}
-                          {(encaje.desglose.monedas.un_dolar > 0 || encaje.desglose.monedas.cincuenta_centavos > 0 || encaje.desglose.monedas.veinticinco_centavos > 0 || 
-                            encaje.desglose.monedas.diez_centavos > 0 || encaje.desglose.monedas.cinco_centavos > 0 || 
-                            encaje.desglose.monedas.un_centavo > 0) && (
+                          {(encaje.desglose.monedas.un_dolar > 0 || encaje.desglose.monedas.cincuenta_centavos > 0 ||
+                            encaje.desglose.monedas.veinticinco_centavos > 0 || encaje.desglose.monedas.diez_centavos > 0 ||
+                            encaje.desglose.monedas.cinco_centavos > 0 || encaje.desglose.monedas.un_centavo > 0) && (
                             <div>
                               <p className="text-xs font-semibold text-gray-700 mb-1">Monedas:</p>
                               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                                {encaje.desglose.monedas.un_dolar > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$1.00 × {encaje.desglose.monedas.un_dolar}:</span>
-                                    <span className="font-medium">{formatCurrency(1.00 * encaje.desglose.monedas.un_dolar)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.monedas.cincuenta_centavos > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$0.50 × {encaje.desglose.monedas.cincuenta_centavos}:</span>
-                                    <span className="font-medium">{formatCurrency(0.50 * encaje.desglose.monedas.cincuenta_centavos)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.monedas.veinticinco_centavos > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$0.25 × {encaje.desglose.monedas.veinticinco_centavos}:</span>
-                                    <span className="font-medium">{formatCurrency(0.25 * encaje.desglose.monedas.veinticinco_centavos)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.monedas.diez_centavos > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$0.10 × {encaje.desglose.monedas.diez_centavos}:</span>
-                                    <span className="font-medium">{formatCurrency(0.10 * encaje.desglose.monedas.diez_centavos)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.monedas.cinco_centavos > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$0.05 × {encaje.desglose.monedas.cinco_centavos}:</span>
-                                    <span className="font-medium">{formatCurrency(0.05 * encaje.desglose.monedas.cinco_centavos)}</span>
-                                  </div>
-                                )}
-                                {encaje.desglose.monedas.un_centavo > 0 && (
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">$0.01 × {encaje.desglose.monedas.un_centavo}:</span>
-                                    <span className="font-medium">{formatCurrency(0.01 * encaje.desglose.monedas.un_centavo)}</span>
-                                  </div>
-                                )}
+                                {encaje.desglose.monedas.un_dolar > 0 && <div className="flex justify-between"><span className="text-gray-600">$1.00 × {encaje.desglose.monedas.un_dolar}:</span><span className="font-medium">{formatCurrency(1.00 * encaje.desglose.monedas.un_dolar)}</span></div>}
+                                {encaje.desglose.monedas.cincuenta_centavos > 0 && <div className="flex justify-between"><span className="text-gray-600">$0.50 × {encaje.desglose.monedas.cincuenta_centavos}:</span><span className="font-medium">{formatCurrency(0.50 * encaje.desglose.monedas.cincuenta_centavos)}</span></div>}
+                                {encaje.desglose.monedas.veinticinco_centavos > 0 && <div className="flex justify-between"><span className="text-gray-600">$0.25 × {encaje.desglose.monedas.veinticinco_centavos}:</span><span className="font-medium">{formatCurrency(0.25 * encaje.desglose.monedas.veinticinco_centavos)}</span></div>}
+                                {encaje.desglose.monedas.diez_centavos > 0 && <div className="flex justify-between"><span className="text-gray-600">$0.10 × {encaje.desglose.monedas.diez_centavos}:</span><span className="font-medium">{formatCurrency(0.10 * encaje.desglose.monedas.diez_centavos)}</span></div>}
+                                {encaje.desglose.monedas.cinco_centavos > 0 && <div className="flex justify-between"><span className="text-gray-600">$0.05 × {encaje.desglose.monedas.cinco_centavos}:</span><span className="font-medium">{formatCurrency(0.05 * encaje.desglose.monedas.cinco_centavos)}</span></div>}
+                                {encaje.desglose.monedas.un_centavo > 0 && <div className="flex justify-between"><span className="text-gray-600">$0.01 × {encaje.desglose.monedas.un_centavo}:</span><span className="font-medium">{formatCurrency(0.01 * encaje.desglose.monedas.un_centavo)}</span></div>}
                               </div>
                             </div>
                           )}
                         </div>
                       </details>
                     )}
-                    
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Transferencia:</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(encaje.transferenciaCobrado)}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Declarado:</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(encaje.totalDeclarado)}</span>
-                    </div>
+                    {(encaje.totalCheques || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Cheques declarados:</span>
+                        <span className="font-medium text-blue-700">{formatCurrency(encaje.totalCheques || 0)}</span>
+                      </div>
+                    )}
+                    {(encaje.tarjeta || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Tarjeta declarada:</span>
+                        <span className="font-medium text-blue-700">{formatCurrency(encaje.tarjeta || 0)}</span>
+                      </div>
+                    )}
+                    {encaje.cheques && encaje.cheques.length > 0 && (
+                      <details className="bg-blue-50 rounded-md p-2 mt-1">
+                        <summary className="text-xs font-medium text-blue-700 cursor-pointer hover:text-blue-900">
+                          Ver detalle de cheques ({encaje.cheques.length})
+                        </summary>
+                        <div className="mt-2 pt-2 border-t border-blue-200 space-y-2">
+                          {encaje.cheques.map((cheque, idx) => (
+                            <div key={idx} className="bg-white rounded p-2 text-xs border border-blue-100">
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Banco:</span>
+                                <span className="font-medium text-gray-800">{cheque.banco}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">N° Cheque:</span>
+                                <span className="font-medium text-gray-800">{cheque.numeroCheque}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Valor:</span>
+                                <span className="font-bold text-blue-700">{formatCurrency(cheque.valor)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
 
                   {/* Diferencia */}
@@ -623,6 +619,55 @@ export default function EncajesPage() {
           }}
           onSave={handleSaveEncaje}
         />
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {deletingEncaje && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 bg-red-100 rounded-full p-3">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Eliminar Arqueo</h2>
+                <p className="text-sm text-gray-500">{deletingEncaje.usuarioNombre}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              ¿Estás seguro de que deseas eliminar el arqueo de{' '}
+              <strong>{deletingEncaje.usuarioNombre}</strong>?
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              Esta acción no se puede deshacer.
+            </p>
+            {deleteError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-lg mb-4">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setDeletingEncaje(null); setDeleteError(null); }}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleteLoading ? (
+                  <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />Eliminando...</>
+                ) : (
+                  <><Trash2 className="h-4 w-4" />Eliminar</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

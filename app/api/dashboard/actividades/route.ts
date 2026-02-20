@@ -1,18 +1,36 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/client';
-import { collection, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+
+// Ecuador es UTC-5, sin horario de verano
+const ECUADOR_OFFSET_HOURS = -5;
+
+function getEcuadorTodayRange() {
+  const nowUTC = new Date();
+  const ecuadorNow = new Date(nowUTC.getTime() + ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+  const startEcuador = new Date(ecuadorNow);
+  startEcuador.setUTCHours(0, 0, 0, 0);
+  const startUTC = new Date(startEcuador.getTime() - ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+  const endEcuador = new Date(ecuadorNow);
+  endEcuador.setUTCHours(23, 59, 59, 999);
+  const endUTC = new Date(endEcuador.getTime() - ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+  return { startUTC, endUTC };
+}
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limitCount = parseInt(searchParams.get('limit') || '20');
 
+    const { startUTC, endUTC } = getEcuadorTodayRange();
     const actividades: any[] = [];
 
-    // Obtener cobros recientes
+    // Obtener cobros del día de hoy en horario Ecuador
     const cobrosRef = collection(db, 'cobros');
     const cobrosQuery = query(
       cobrosRef,
+      where('fecha', '>=', Timestamp.fromDate(startUTC)),
+      where('fecha', '<=', Timestamp.fromDate(endUTC)),
       orderBy('fecha', 'desc'),
       limit(limitCount)
     );
@@ -31,10 +49,12 @@ export async function GET(request: Request) {
       });
     });
 
-    // Obtener encajes recientes
+    // Obtener encajes del día de hoy en horario Ecuador
     const encajesRef = collection(db, 'encajes_caja');
     const encajesQuery = query(
       encajesRef,
+      where('fecha', '>=', Timestamp.fromDate(startUTC)),
+      where('fecha', '<=', Timestamp.fromDate(endUTC)),
       orderBy('fecha', 'desc'),
       limit(limitCount)
     );

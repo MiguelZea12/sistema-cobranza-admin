@@ -2,20 +2,38 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/client';
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 
+// Ecuador es UTC-5, sin horario de verano
+const ECUADOR_OFFSET_HOURS = -5;
+
+function getEcuadorTodayRange() {
+  const nowUTC = new Date();
+  // Convertir a hora Ecuador
+  const ecuadorNow = new Date(nowUTC.getTime() + ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+  // Inicio del día en Ecuador (00:00:00)
+  const startEcuador = new Date(ecuadorNow);
+  startEcuador.setUTCHours(0, 0, 0, 0);
+  // Convertir de nuevo a UTC para Firestore
+  const startUTC = new Date(startEcuador.getTime() - ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+
+  // Fin del día en Ecuador (23:59:59.999)
+  const endEcuador = new Date(ecuadorNow);
+  endEcuador.setUTCHours(23, 59, 59, 999);
+  const endUTC = new Date(endEcuador.getTime() - ECUADOR_OFFSET_HOURS * 60 * 60 * 1000);
+
+  return { startUTC, endUTC, ecuadorDate: ecuadorNow };
+}
+
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const periodo = searchParams.get('periodo') || '30'; // días
-
-    // Calcular fecha límite
-    const fechaLimite = new Date();
-    fechaLimite.setDate(fechaLimite.getDate() - parseInt(periodo));
+    // Siempre filtrar por el día de hoy en horario Ecuador
+    const { startUTC, endUTC } = getEcuadorTodayRange();
 
     // Obtener cobros
     const cobrosRef = collection(db, 'cobros');
     const cobrosQuery = query(
       cobrosRef,
-      where('fecha', '>=', Timestamp.fromDate(fechaLimite)),
+      where('fecha', '>=', Timestamp.fromDate(startUTC)),
+      where('fecha', '<=', Timestamp.fromDate(endUTC)),
       orderBy('fecha', 'desc'),
       limit(1000)
     );
@@ -60,7 +78,8 @@ export async function GET(request: Request) {
     const encajesRef = collection(db, 'encajes_caja');
     const encajesQuery = query(
       encajesRef,
-      where('fecha', '>=', Timestamp.fromDate(fechaLimite)),
+      where('fecha', '>=', Timestamp.fromDate(startUTC)),
+      where('fecha', '<=', Timestamp.fromDate(endUTC)),
       orderBy('fecha', 'desc'),
       limit(1000)
     );

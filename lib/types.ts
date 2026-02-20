@@ -98,6 +98,11 @@ export interface Cobro {
   saldoAnterior: number;
   saldoNuevo: number;
   formaPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta';
+  datosCheque?: {
+    banco: string;
+    numeroCheque: string;
+    valor: number;
+  };
   fecha: Date;
   imageUrl?: string;
   observaciones?: string;
@@ -130,6 +135,12 @@ export interface DesgloseDenominaciones {
   };
 }
 
+export interface ChequeArqueo {
+  banco: string;
+  numeroCheque: string;
+  valor: number;
+}
+
 export interface EncajeCaja {
   id?: string;
   usuarioNombre: string;
@@ -137,10 +148,15 @@ export interface EncajeCaja {
   efectivo: number;
   desglose?: DesgloseDenominaciones; // Desglose de billetes y monedas (opcional para compatibilidad)
   transferencia: number;
+  cheques?: ChequeArqueo[];
+  totalCheques?: number;
+  tarjeta?: number;
   totalDeclarado: number;
   totalCobrado: number;
   efectivoCobrado: number;
   transferenciaCobrado: number;
+  chequeCobrado?: number;
+  tarjetaCobrado?: number;
   diferencia: number;
   observaciones?: string;
   createdAt?: Date;

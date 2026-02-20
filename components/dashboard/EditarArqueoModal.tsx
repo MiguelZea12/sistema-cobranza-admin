@@ -1,8 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EncajeCaja, DesgloseDenominaciones } from '@/lib/types';
-import { X, Save, DollarSign } from 'lucide-react';
+import { EncajeCaja, DesgloseDenominaciones, ChequeArqueo } from '@/lib/types';
+import { X, Save, DollarSign, Plus, Trash2 } from 'lucide-react';
+
+const BANCOS_ECUADOR = [
+  'Banco Pichincha', 'Banco de Guayaquil', 'Banco del Pacífico', 'Banco Bolivariano',
+  'Banco del Austro', 'Banco Internacional', 'Produbanco', 'Banco de Machala',
+  'Banco de Loja', 'Banco Amazonas', 'Banco Económico', 'Banco Capital',
+  'Banco Solidario', 'Banco ProCredit', 'BanEcuador',
+];
 
 interface EditarArqueoModalProps {
   encaje: EncajeCaja;
@@ -19,6 +26,9 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
   const [totalDeclarado, setTotalDeclarado] = useState(encaje.totalDeclarado);
   const [efectivo, setEfectivo] = useState(encaje.efectivo);
   const [transferencia, setTransferencia] = useState(encaje.transferencia);
+  const [cheques, setCheques] = useState<ChequeArqueo[]>(encaje.cheques ?? []);
+  const [chequesValorStr, setChequesValorStr] = useState<string[]>((encaje.cheques ?? []).map(c => c.valor.toString()));
+  const [tarjeta, setTarjeta] = useState(encaje.tarjeta ?? 0);
   const [observaciones, setObservaciones] = useState(encaje.observaciones || '');
 
   // Desglose de denominaciones
@@ -71,6 +81,9 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
     setTotalDeclarado(encaje.totalDeclarado);
     setEfectivo(encaje.efectivo);
     setTransferencia(encaje.transferencia);
+    setCheques(encaje.cheques ?? []);
+    setChequesValorStr((encaje.cheques ?? []).map(c => c.valor.toString()));
+    setTarjeta(encaje.tarjeta ?? 0);
     setObservaciones(encaje.observaciones || '');
     setDesglose(
       encaje.desglose || {
@@ -94,14 +107,15 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
     );
   }, [encaje]);
 
-  // Actualizar Total Declarado automáticamente al cambiar desglose o transferencia
+  // Actualizar Total Declarado automáticamente
   useEffect(() => {
-    const nuevoTotal = totalEfectivoDesglose + transferencia;
+    const totalCheques = cheques.reduce((sum, c) => sum + c.valor, 0);
+    const nuevoTotal = totalEfectivoDesglose + transferencia + totalCheques + tarjeta;
     setTotalDeclarado(nuevoTotal);
     setEfectivo(totalEfectivoDesglose);
-  }, [desglose, transferencia, totalEfectivoDesglose]);
+  }, [desglose, transferencia, cheques, tarjeta, totalEfectivoDesglose]);
 
-  const nuevaDiferencia = encaje.totalCobrado - totalDeclarado;
+  const nuevaDiferencia = totalDeclarado - encaje.totalCobrado;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +132,9 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
           totalDeclarado,
           efectivo,
           transferencia,
+          cheques: cheques.length > 0 ? cheques : [],
+          totalCheques: cheques.reduce((sum, c) => sum + c.valor, 0),
+          tarjeta,
           desglose,
           observaciones,
         }),
@@ -191,6 +208,38 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                     C${encaje.transferenciaCobrado.toFixed(2)}
                   </span>
                 </div>
+                {(encaje.chequeCobrado ?? 0) > 0 && (
+                  <div>
+                    <span className="text-gray-600">Cheque Cobrado:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      C${(encaje.chequeCobrado ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {(encaje.tarjetaCobrado ?? 0) > 0 && (
+                  <div>
+                    <span className="text-gray-600">Tarjeta Cobrado:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      C${(encaje.tarjetaCobrado ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {(encaje.totalCheques ?? 0) > 0 && (
+                  <div>
+                    <span className="text-gray-600">Cheques Declarados:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      C${(encaje.totalCheques ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {(encaje.tarjeta ?? 0) > 0 && (
+                  <div>
+                    <span className="text-gray-600">Tarjeta Declarada:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      C${(encaje.tarjeta ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -208,7 +257,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-bold cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Este valor se actualiza automáticamente según el desglose + transferencia
+                Este valor se actualiza automáticamente según el desglose + transferencia + cheques + tarjeta
               </p>
             </div>
 
@@ -316,6 +365,114 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
               />
             </div>
 
+            {/* Cheques */}
+            <div className="border border-sky-200 rounded-lg p-4 bg-sky-50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sky-800">Cheques Recibidos ({cheques.length})</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheques([...cheques, { banco: '', numeroCheque: '', valor: 0 }]);
+                    setChequesValorStr([...chequesValorStr, '']);
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" /> Agregar
+                </button>
+              </div>
+
+              {cheques.length === 0 && (
+                <p className="text-sm text-sky-600 italic text-center py-2">Sin cheques. Presiona "Agregar" para añadir.</p>
+              )}
+
+              {cheques.map((cheque, index) => (
+                <div key={index} className="bg-white border border-sky-200 rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-sky-700">Cheque #{index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const n = [...cheques]; n.splice(index, 1); setCheques(n);
+                        const ns = [...chequesValorStr]; ns.splice(index, 1); setChequesValorStr(ns);
+                      }}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Banco</label>
+                      <select
+                        value={cheque.banco}
+                        onChange={(e) => {
+                          const n = [...cheques]; n[index] = { ...n[index], banco: e.target.value }; setCheques(n);
+                        }}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                      >
+                        <option value="">Seleccionar banco</option>
+                        {BANCOS_ECUADOR.map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">N° Cheque</label>
+                      <input
+                        type="text"
+                        value={cheque.numeroCheque}
+                        onChange={(e) => {
+                          const n = [...cheques]; n[index] = { ...n[index], numeroCheque: e.target.value }; setCheques(n);
+                        }}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                        placeholder="Número de cheque"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Valor</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={chequesValorStr[index] ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
+                          const ns = [...chequesValorStr]; ns[index] = val; setChequesValorStr(ns);
+                          const n = [...cheques]; n[index] = { ...n[index], valor: parseFloat(val) || 0 }; setCheques(n);
+                        }}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {cheques.length > 0 && (
+                <div className="flex justify-between items-center pt-2 border-t border-sky-200 mt-1">
+                  <span className="text-sm font-semibold text-sky-800">Total Cheques:</span>
+                  <span className="text-base font-bold text-sky-700">
+                    C${cheques.reduce((s, c) => s + c.valor, 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Tarjeta de Crédito */}
+            <div>
+              <label htmlFor="tarjeta" className="block text-sm font-medium text-gray-700 mb-2">
+                Tarjeta de Crédito
+              </label>
+              <input
+                type="number"
+                id="tarjeta"
+                step="0.01"
+                min="0"
+                value={tarjeta}
+                onChange={(e) => setTarjeta(parseFloat(e.target.value) || 0)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0.00"
+              />
+            </div>
+
             {/* Observaciones */}
             <div>
               <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
@@ -352,7 +509,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                       : 'text-gray-600'
                   }`}
                 >
-                  {nuevaDiferencia > 0 ? '+' : ''}C${nuevaDiferencia.toFixed(2)}
+                  {nuevaDiferencia > 0 ? '+' : nuevaDiferencia < 0 ? '-' : ''}C${Math.abs(nuevaDiferencia).toFixed(2)}
                 </span>
               </div>
               <p className="text-xs text-gray-600 mt-1">

@@ -32,6 +32,19 @@ interface Actividad {
   diferencia?: number;
 }
 
+// Retorna la fecha de hoy en horario Ecuador (UTC-5) como string legible
+function getEcuadorTodayLabel(): string {
+  const now = new Date();
+  const ecuadorNow = new Date(now.getTime() + -5 * 60 * 60 * 1000);
+  return ecuadorNow.toLocaleDateString('es-EC', {
+    timeZone: 'UTC',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     usuarios: 0,
@@ -39,6 +52,7 @@ export default function DashboardPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [loading, setLoading] = useState(true);
+  const todayLabel = getEcuadorTodayLabel();
 
   useEffect(() => {
     fetchAllData();
@@ -50,8 +64,8 @@ export default function DashboardPage() {
       
       const [usuariosRes, statsRes, actividadesRes] = await Promise.all([
         fetch('/api/usuarios'),
-        fetch('/api/dashboard/stats?periodo=30'),
-        fetch('/api/dashboard/actividades?limit=15')
+        fetch('/api/dashboard/stats'),
+        fetch('/api/dashboard/actividades?limit=50')
       ]);
 
       const usuarios = await usuariosRes.json();
@@ -75,8 +89,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Resumen general del sistema de cobranza - Últimos 30 días
+        <p className="mt-1 text-sm text-gray-600 capitalize">
+          Resumen del día: {todayLabel}
         </p>
       </div>
 
@@ -112,8 +126,8 @@ export default function DashboardPage() {
       {dashboardStats && dashboardStats.topCobradores.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Top Cobradores del Mes</h2>
-            <span className="text-xs sm:text-sm text-gray-500">Últimos 30 días</span>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Top Cobradores de Hoy</h2>
+            <span className="text-xs sm:text-sm text-gray-500 capitalize">{todayLabel}</span>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{dashboardStats.topCobradores.map((cobrador, index) => (
               <TopCobradorCard
@@ -166,7 +180,10 @@ export default function DashboardPage() {
         {/* Actividad Reciente */}
         <div className="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Actividad Reciente</h2>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Actividad de Hoy</h2>
+              <p className="text-xs text-gray-500 capitalize">{todayLabel}</p>
+            </div>
             <button
               onClick={fetchAllData}
               className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
