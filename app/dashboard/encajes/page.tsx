@@ -1,9 +1,10 @@
 'use client';
 
-import { Calculator, DollarSign, TrendingUp, TrendingDown, Search, Filter, Calendar, User, Edit2, Trash2 } from 'lucide-react';
+import { Calculator, DollarSign, TrendingUp, TrendingDown, Search, Filter, Calendar, User, Edit2, Trash2, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { EncajeCaja } from '@/lib/types';
 import EditarArqueoModal from '@/components/dashboard/EditarArqueoModal';
+import { imprimirArqueo } from '@/lib/utils/generarPDFArqueo';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -526,15 +527,24 @@ export default function EncajesPage() {
                   {/* Botones de acción */}
                   <div className="pt-3 border-t border-gray-200 flex items-center gap-2">
                     <button
+                      onClick={() => imprimirArqueo(encaje)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                      title="Descargar / Imprimir PDF"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Imprimir PDF
+                    </button>
+                    <button
                       onClick={() => handleEditEncaje(encaje)}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      title="Editar"
                     >
                       <Edit2 className="h-4 w-4" />
-                      Editar
                     </button>
                     <button
                       onClick={() => handleDeleteEncaje(encaje)}
-                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      className="px-3 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      title="Eliminar"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
