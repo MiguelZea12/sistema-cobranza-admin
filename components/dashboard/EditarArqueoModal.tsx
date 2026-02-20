@@ -193,26 +193,26 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 <div>
                   <span className="text-gray-600">Total Cobrado:</span>
                   <span className="ml-2 font-bold text-gray-900">
-                    C${encaje.totalCobrado.toFixed(2)}
+                    ${encaje.totalCobrado.toFixed(2)}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Efectivo Cobrado:</span>
                   <span className="ml-2 font-medium text-gray-900">
-                    C${encaje.efectivoCobrado.toFixed(2)}
+                    ${encaje.efectivoCobrado.toFixed(2)}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Transferencia Cobrado:</span>
                   <span className="ml-2 font-medium text-gray-900">
-                    C${encaje.transferenciaCobrado.toFixed(2)}
+                    ${encaje.transferenciaCobrado.toFixed(2)}
                   </span>
                 </div>
                 {(encaje.chequeCobrado ?? 0) > 0 && (
                   <div>
                     <span className="text-gray-600">Cheque Cobrado:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      C${(encaje.chequeCobrado ?? 0).toFixed(2)}
+                      ${(encaje.chequeCobrado ?? 0).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -220,7 +220,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                   <div>
                     <span className="text-gray-600">Tarjeta Cobrado:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      C${(encaje.tarjetaCobrado ?? 0).toFixed(2)}
+                      ${(encaje.tarjetaCobrado ?? 0).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -228,7 +228,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                   <div>
                     <span className="text-gray-600">Cheques Declarados:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      C${(encaje.totalCheques ?? 0).toFixed(2)}
+                      ${(encaje.totalCheques ?? 0).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -236,7 +236,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                   <div>
                     <span className="text-gray-600">Tarjeta Declarada:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      C${(encaje.tarjeta ?? 0).toFixed(2)}
+                      ${(encaje.tarjeta ?? 0).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -270,16 +270,16 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Billetes</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { label: 'C$100', key: 'cien', value: 100 },
-                    { label: 'C$50', key: 'cincuenta', value: 50 },
-                    { label: 'C$20', key: 'veinte', value: 20 },
-                    { label: 'C$10', key: 'diez', value: 10 },
-                    { label: 'C$5', key: 'cinco', value: 5 },
-                    { label: 'C$1', key: 'uno', value: 1 },
+                    { label: '$100', key: 'cien', value: 100 },
+                    { label: '$50', key: 'cincuenta', value: 50 },
+                    { label: '$20', key: 'veinte', value: 20 },
+                    { label: '$10', key: 'diez', value: 10 },
+                    { label: '$5', key: 'cinco', value: 5 },
+                    { label: '$1', key: 'uno', value: 1 },
                   ].map((billete) => (
                     <div key={billete.key}>
                       <label className="block text-xs text-gray-600 mb-1">
-                        {billete.label} × {desglose.billetes[billete.key as keyof typeof desglose.billetes]} = C$
+                        {billete.label} × {desglose.billetes[billete.key as keyof typeof desglose.billetes]} = $
                         {(billete.value * desglose.billetes[billete.key as keyof typeof desglose.billetes]).toFixed(2)}
                       </label>
                       <input
@@ -307,16 +307,16 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Monedas</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { label: 'C$1.00', key: 'un_dolar', value: 1.0 },
-                    { label: 'C$0.50', key: 'cincuenta_centavos', value: 0.5 },
-                    { label: 'C$0.25', key: 'veinticinco_centavos', value: 0.25 },
-                    { label: 'C$0.10', key: 'diez_centavos', value: 0.1 },
-                    { label: 'C$0.05', key: 'cinco_centavos', value: 0.05 },
-                    { label: 'C$0.01', key: 'un_centavo', value: 0.01 },
+                    { label: '$1.00', key: 'un_dolar', value: 1.0 },
+                    { label: '$0.50', key: 'cincuenta_centavos', value: 0.5 },
+                    { label: '$0.25', key: 'veinticinco_centavos', value: 0.25 },
+                    { label: '$0.10', key: 'diez_centavos', value: 0.1 },
+                    { label: '$0.05', key: 'cinco_centavos', value: 0.05 },
+                    { label: '$0.01', key: 'un_centavo', value: 0.01 },
                   ].map((moneda) => (
                     <div key={moneda.key}>
                       <label className="block text-xs text-gray-600 mb-1">
-                        {moneda.label} × {desglose.monedas[moneda.key as keyof typeof desglose.monedas]} = C$
+                        {moneda.label} × {desglose.monedas[moneda.key as keyof typeof desglose.monedas]} = $
                         {(moneda.value * desglose.monedas[moneda.key as keyof typeof desglose.monedas]).toFixed(2)}
                       </label>
                       <input
@@ -344,7 +344,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-blue-900">Total Efectivo (Desglose):</span>
                   <span className="text-lg font-bold text-blue-700">
-                    C${totalEfectivoDesglose.toFixed(2)}
+                    ${totalEfectivoDesglose.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -450,7 +450,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                 <div className="flex justify-between items-center pt-2 border-t border-sky-200 mt-1">
                   <span className="text-sm font-semibold text-sky-800">Total Cheques:</span>
                   <span className="text-base font-bold text-sky-700">
-                    C${cheques.reduce((s, c) => s + c.valor, 0).toFixed(2)}
+                    ${cheques.reduce((s, c) => s + c.valor, 0).toFixed(2)}
                   </span>
                 </div>
               )}
@@ -509,7 +509,7 @@ export default function EditarArqueoModal({ encaje, isOpen, onClose, onSave }: E
                       : 'text-gray-600'
                   }`}
                 >
-                  {nuevaDiferencia > 0 ? '+' : nuevaDiferencia < 0 ? '-' : ''}C${Math.abs(nuevaDiferencia).toFixed(2)}
+                  {nuevaDiferencia > 0 ? '+' : nuevaDiferencia < 0 ? '-' : ''}${Math.abs(nuevaDiferencia).toFixed(2)}
                 </span>
               </div>
               <p className="text-xs text-gray-600 mt-1">

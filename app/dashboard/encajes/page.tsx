@@ -173,9 +173,9 @@ export default function EncajesPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-NI', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'NIO'
+      currency: 'USD'
     }).format(amount);
   };
 
