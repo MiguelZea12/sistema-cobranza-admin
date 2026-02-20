@@ -409,6 +409,30 @@ export default function CobrosPage() {
                       </span>
                     </div>
 
+                    {cobro.formaPago === 'cheque' && cobro.datosCheque && (
+                      <details className="bg-purple-50 rounded-md p-2 mt-1">
+                        <summary className="text-xs font-medium text-purple-700 cursor-pointer hover:text-purple-900">
+                          Ver detalle del cheque
+                        </summary>
+                        <div className="mt-2 pt-2 border-t border-purple-200">
+                          <div className="bg-white rounded p-2 text-xs border border-purple-100 space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Banco:</span>
+                              <span className="font-medium text-gray-800">{cobro.datosCheque.banco}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">N° Cheque:</span>
+                              <span className="font-medium text-gray-800">{cobro.datosCheque.numeroCheque}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Valor:</span>
+                              <span className="font-bold text-purple-700">{formatCurrency(cobro.datosCheque.valor)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </details>
+                    )}
+
                     {cobro.numeroComprobante && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Comprobante:</span>
