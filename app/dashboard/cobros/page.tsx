@@ -1,8 +1,9 @@
 'use client';
 
-import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt } from 'lucide-react';
+import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Cobro } from '@/lib/types';
+import { imprimirTicketCobro } from '@/lib/utils/generarTicketCobro';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -507,6 +508,17 @@ export default function CobrosPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Botón de imprimir ticket */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => imprimirTicketCobro(cobro)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Imprimir Ticket
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
