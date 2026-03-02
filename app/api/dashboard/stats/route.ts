@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/client';
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 
+// Forzar que esta ruta siempre sea dinámica (sin caché en Vercel)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Ecuador es UTC-5, sin horario de verano
 const ECUADOR_OFFSET_HOURS = -5;
 
@@ -109,7 +113,12 @@ export async function GET(request: Request) {
       totalDiferencias,
     };
 
-    return NextResponse.json(stats);
+    return NextResponse.json(stats, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+      },
+    });
   } catch (error: any) {
     console.error('Error obteniendo estadísticas:', error);
     return NextResponse.json(

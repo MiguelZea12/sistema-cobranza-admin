@@ -63,9 +63,9 @@ export default function DashboardPage() {
       setLoading(true);
       
       const [usuariosRes, statsRes, actividadesRes] = await Promise.all([
-        fetch('/api/usuarios'),
-        fetch('/api/dashboard/stats'),
-        fetch('/api/dashboard/actividades?limit=50')
+        fetch('/api/usuarios', { cache: 'no-store' }),
+        fetch('/api/dashboard/stats', { cache: 'no-store' }),
+        fetch('/api/dashboard/actividades?limit=50', { cache: 'no-store' })
       ]);
 
       const usuarios = await usuariosRes.json();

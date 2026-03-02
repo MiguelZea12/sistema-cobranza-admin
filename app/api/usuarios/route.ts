@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UsuarioService } from '@/services/UsuarioService';
 
+// Forzar que esta ruta siempre sea dinámica (sin caché en Vercel)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const service = new UsuarioService();
 
 export async function GET() {
