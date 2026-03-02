@@ -1,9 +1,8 @@
 import { Cobro } from '@/lib/types';
 import { LOGO_BASE64 } from '@/lib/logoBase64';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
-/**
- * Normaliza cualquier formato de fecha de Firestore/JS a Date
- */
 const normFecha = (date: any): Date => {
   if (!date) return new Date();
   if (date?.toDate && typeof date.toDate === 'function') return date.toDate();
@@ -11,109 +10,53 @@ const normFecha = (date: any): Date => {
   return new Date(date);
 };
 
-/**
- * Genera el HTML del ticket de cobro (igual al de la app móvil) y lo abre
- * en una ventana nueva para imprimirlo o guardarlo como PDF.
- */
-export function imprimirTicketCobro(cobro: Cobro): void {
+function buildTicketHTML(cobro: Cobro): string {
   const fecha = normFecha(cobro.fecha);
+  const fechaStr = fecha.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const horaStr  = fecha.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  const fechaStr = fecha.toLocaleDateString('es-EC', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-  const horaStr = fecha.toLocaleTimeString('es-EC', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-  const numComprobante = cobro.numeroComprobante || '—';
-
+  const numComprobante = cobro.numeroComprobante || '---';
   const formaPagoTexto =
-    cobro.formaPago === 'efectivo' ? 'EFECTIVO'
+    cobro.formaPago === 'efectivo'        ? 'EFECTIVO'
     : cobro.formaPago === 'transferencia' ? 'TRANSFERENCIA'
-    : cobro.formaPago === 'cheque' ? 'CHEQUE'
+    : cobro.formaPago === 'cheque'        ? 'CHEQUE'
     : 'TARJETA';
 
-  const montoPagado = cobro.monto || 0;
+  const montoPagado   = cobro.monto ?? 0;
   const saldoRestante = cobro.saldoNuevo ?? 0;
   const usuarioNombre = cobro.createdBy || 'RECAUDADOR';
 
-  // Sección de cuotas/letra
+  const seccionContrato = cobro.contratoId
+    ? `<div class="linea-puntos"></div>
+      <div class="seccion-titulo">CONTRATO:</div>
+      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>`
+    : '';
+
   let seccionCuotas = '';
   if (cobro.letrasPagadas && cobro.letrasPagadas.length > 0) {
     const items = cobro.letrasPagadas
-      .map(
-        (lp) =>
-          `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : `${String(lp.numero).padStart(2, '0')}/58`}: ${lp.monto.toFixed(2)} USD</span></div>`
-      )
+      .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/58'}: ${lp.monto.toFixed(2)} USD</span></div>`)
       .join('');
-    seccionCuotas = `
-      <div class="linea-puntos"></div>
+    seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTAS PAGADAS:</div>
-      ${items}
-    `;
+      ${items}`;
   } else if (cobro.numeroLetra !== undefined && cobro.numeroLetra !== null) {
-    const numLetraStr =
-      cobro.numeroLetra === 0
-        ? 'ENTRADA'
-        : `${String(cobro.numeroLetra).padStart(2, '0')}/58`;
-    seccionCuotas = `
-      <div class="linea-puntos"></div>
+    const label = cobro.numeroLetra === 0 ? 'ENTRADA' : String(cobro.numeroLetra).padStart(2,'0')+'/58';
+    seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTA:</div>
-      <div class="detalle-row"><span>${numLetraStr}</span></div>
-    `;
+      <div class="detalle-row"><span>${label}</span></div>`;
   }
 
-  // Sección de contrato
-  const seccionContrato = cobro.contratoId
-    ? `
-      <div class="linea-puntos"></div>
-      <div class="seccion-titulo">CONTRATO:</div>
-      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>
-    `
-    : '';
-
-  // Sección de cheque
-  const seccionCheque =
-    cobro.formaPago === 'cheque' && cobro.datosCheque
-      ? `
-      <div class="linea-puntos"></div>
-      <div class="seccion-titulo">DATOS DEL CHEQUE:</div>
-      <div class="info-row">Banco: ${cobro.datosCheque.banco}</div>
-      <div class="info-row">N° Cheque: ${cobro.datosCheque.numeroCheque}</div>
-      <div class="info-row">Valor: ${cobro.datosCheque.valor.toFixed(2)} USD</div>
-    `
-      : '';
-
-  // Sección de observaciones
-  const seccionObs = cobro.observaciones
-    ? `
-      <div class="linea-puntos"></div>
-      <div class="seccion-titulo">OBSERVACIONES:</div>
-      <div class="info-row">${cobro.observaciones}</div>
-    `
-    : '';
-
-  const html = `<!DOCTYPE html>
+  // HTML idéntico al html76 de la app móvil
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=76mm">
-  <title>Ticket de Cobro - ${cobro.clienteNombre}</title>
   <style>
     @page { size: 76mm auto; margin: 0mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Courier New', monospace;
-      font-size: 10px;
-      width: 76mm;
-      padding: 3mm 2mm;
-      background: white;
-      color: black;
-    }
+    .ticket-wrapper { font-family: 'Courier New', monospace; font-size: 10px; width: 76mm; padding: 4mm 5mm 8mm 5mm; background: white; color: black; }
     .linea-puntos { border-top: 1px dashed #666; margin: 3mm 0; }
     .header { text-align: center; margin-bottom: 3mm; }
     .logo-img { max-width: 68mm; height: auto; margin: 0 auto 2mm auto; display: block; }
@@ -129,17 +72,13 @@ export function imprimirTicketCobro(cobro: Cobro): void {
     .firma-seccion { margin-top: 5mm; text-align: center; }
     .firma-linea { border-top: 1px solid #000; width: 80%; margin: 8mm auto 1mm auto; }
     .firma-texto { font-size: 8pt; margin: 1mm 0; }
-    .footer { text-align: center; margin-top: 5mm; font-size: 10pt; font-weight: bold; }
-
-    /* Estilos de impresión: ocultar todo excepto el ticket */
-    @media print {
-      body { width: 76mm; }
-    }
+    .footer { text-align: center; margin-top: 5mm; margin-bottom: 6mm; font-size: 10pt; font-weight: bold; }
   </style>
 </head>
 <body>
+<div class="ticket-wrapper">
   <div class="header">
-    ${LOGO_BASE64 ? `<img src="${LOGO_BASE64}" class="logo-img" alt="Logo">` : ''}
+    ${LOGO_BASE64 ? '<img src="' + LOGO_BASE64 + '" class="logo-img" alt="Logo">' : ''}
     <div class="linea-puntos"></div>
     <div class="num-comprobante">NUM. COMPROBANTE: ${numComprobante}</div>
     <div class="fecha-emision">FECHA DE EMISION: ${fechaStr} ${horaStr}</div>
@@ -147,7 +86,6 @@ export function imprimirTicketCobro(cobro: Cobro): void {
   <div class="linea-puntos"></div>
   <div class="seccion-titulo">CLIENTE:</div>
   <div class="cliente-nombre">${cobro.clienteNombre}</div>
-  <div class="info-row">C.I: ${cobro.clienteCedula}</div>
   ${seccionContrato}
   ${seccionCuotas}
   <div class="linea-puntos"></div>
@@ -157,37 +95,69 @@ export function imprimirTicketCobro(cobro: Cobro): void {
     <span class="forma-pago-titulo">FORMA DE PAGO:</span><br>
     ${formaPagoTexto}: ${montoPagado.toFixed(2)} USD
   </div>
-  ${seccionCheque}
   <div class="linea-puntos"></div>
-  <div class="info-row" style="display:flex;justify-content:space-between;font-size:9pt;margin:2mm 0;">
-    <span style="font-weight:bold;">SALDO ANTERIOR:</span>
-    <span style="font-weight:bold;">${(cobro.saldoAnterior ?? 0).toFixed(2)} USD</span>
-  </div>
   <div class="info-row" style="display:flex;justify-content:space-between;font-size:9pt;margin:2mm 0;">
     <span style="font-weight:bold;">SALDO PENDIENTE:</span>
     <span style="font-weight:bold;">${saldoRestante.toFixed(2)} USD</span>
   </div>
-  ${seccionObs}
   <div class="firma-seccion">
     <div class="firma-linea"></div>
     <div class="firma-texto">F. CLIENTE</div>
     <div class="firma-texto">${cobro.clienteNombre}</div>
     <div class="firma-linea" style="margin-top:5mm;"></div>
-    <div class="firma-texto">F. ${usuarioNombre.toUpperCase()}</div>
+    <div class="firma-texto">F. ${usuarioNombre}</div>
   </div>
   <div class="linea-puntos"></div>
   <div class="footer">GRACIAS POR SU PAGO!</div>
-  <script>
-    window.onload = function() {
-      window.print();
-    };
-  </script>
+</div>
 </body>
 </html>`;
+}
 
-  const win = window.open('', '_blank', 'width=350,height=600,scrollbars=yes');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
+export async function imprimirTicketCobro(cobro: Cobro): Promise<void> {
+  // 76mm a 96dpi = 287px — coincide exactamente con el body { width: 76mm } del HTML
+  const PX_WIDTH = 287;
+
+  const container = document.createElement('div');
+  container.style.cssText = `position:fixed;left:-9999px;top:0;width:${PX_WIDTH}px;background:#fff;`;
+  container.innerHTML = buildTicketHTML(cobro);
+  document.body.appendChild(container);
+
+  const img = container.querySelector('img');
+  if (img) {
+    await new Promise<void>(resolve => {
+      if (img.complete) { resolve(); return; }
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+  }
+
+  try {
+    // scale:4 → canvas de ~1148px de ancho = alta resolución para un PDF de 76mm
+    const canvas = await html2canvas(container, {
+      scale: 4,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: PX_WIDTH,
+      windowWidth: PX_WIDTH,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+
+    // PDF exactamente de 76mm de ancho, alto proporcional al contenido (sin espacio en blanco)
+    const widthMm  = 76;
+    const heightMm = (canvas.height / canvas.width) * widthMm;
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [widthMm, heightMm],
+    });
+
+    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+    pdf.save(`ticket_${cobro.numeroComprobante || cobro.id || 'cobro'}.pdf`);
+  } finally {
+    document.body.removeChild(container);
   }
 }

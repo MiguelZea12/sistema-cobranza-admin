@@ -24,6 +24,9 @@ export default function CobrosPage() {
   // Modal de imagen
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
+  // ID del cobro cuyo PDF está generándose
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
   // Listas únicas
   const [usuarios, setUsuarios] = useState<string[]>([]);
 
@@ -512,11 +515,32 @@ export default function CobrosPage() {
                   {/* Botón de imprimir ticket */}
                   <div className="pt-4 border-t border-gray-200">
                     <button
-                      onClick={() => imprimirTicketCobro(cobro)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      onClick={async () => {
+                        const id = cobro.id || cobro.numeroComprobante || '';
+                        setDownloadingId(id);
+                        try {
+                          await imprimirTicketCobro(cobro);
+                        } finally {
+                          setDownloadingId(null);
+                        }
+                      }}
+                      disabled={downloadingId === (cobro.id || cobro.numeroComprobante || '')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                     >
-                      <Printer className="h-4 w-4" />
-                      Imprimir Ticket
+                      {downloadingId === (cobro.id || cobro.numeroComprobante || '') ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          Generando PDF...
+                        </>
+                      ) : (
+                        <>
+                          <Printer className="h-4 w-4" />
+                          Descargar Ticket PDF
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
