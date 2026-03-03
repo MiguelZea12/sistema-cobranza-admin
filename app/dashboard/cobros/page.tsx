@@ -7,6 +7,15 @@ import { imprimirTicketCobro } from '@/lib/utils/generarTicketCobro';
 
 const ITEMS_PER_PAGE = 6;
 
+// Obtener fecha de hoy en formato YYYY-MM-DD
+const getHoy = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function CobrosPage() {
   const [cobros, setCobros] = useState<Cobro[]>([]);
   const [filteredCobros, setFilteredCobros] = useState<Cobro[]>([]);
@@ -17,8 +26,8 @@ export default function CobrosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsuario, setSelectedUsuario] = useState<string>('');
   const [selectedFormaPago, setSelectedFormaPago] = useState<string>('');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [fechaInicio, setFechaInicio] = useState(getHoy());
+  const [fechaFin, setFechaFin] = useState(getHoy());
   const [currentPage, setCurrentPage] = useState(1);
   
   // Modal de imagen
@@ -122,8 +131,8 @@ export default function CobrosPage() {
     setSearchTerm('');
     setSelectedUsuario('');
     setSelectedFormaPago('');
-    setFechaInicio('');
-    setFechaFin('');
+    setFechaInicio(getHoy());
+    setFechaFin(getHoy());
   };
 
   const formatDate = (date: any) => {
@@ -192,7 +201,7 @@ export default function CobrosPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Cobros</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Historial completo de cobros realizados
+            Cobros del día — puedes cambiar las fechas en los filtros
           </p>
         </div>
         <div className="flex items-center gap-2">

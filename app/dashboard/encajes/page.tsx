@@ -8,6 +8,15 @@ import { imprimirArqueo } from '@/lib/utils/generarPDFArqueo';
 
 const ITEMS_PER_PAGE = 6;
 
+// Obtener fecha de hoy en formato YYYY-MM-DD
+const getHoy = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function EncajesPage() {
   const [encajes, setEncajes] = useState<EncajeCaja[]>([]);
   const [filteredEncajes, setFilteredEncajes] = useState<EncajeCaja[]>([]);
@@ -17,8 +26,8 @@ export default function EncajesPage() {
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsuario, setSelectedUsuario] = useState<string>('');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [fechaInicio, setFechaInicio] = useState(getHoy());
+  const [fechaFin, setFechaFin] = useState(getHoy());
   const [currentPage, setCurrentPage] = useState(1);
   
   // Lista única de usuarios
@@ -113,8 +122,8 @@ export default function EncajesPage() {
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedUsuario('');
-    setFechaInicio('');
-    setFechaFin('');
+    setFechaInicio(getHoy());
+    setFechaFin(getHoy());
   };
 
   const handleEditEncaje = (encaje: EncajeCaja) => {
@@ -198,7 +207,7 @@ export default function EncajesPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Arqueos de Caja</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Historial completo de arqueos realizados por los usuarios
+            Arqueos del día — puedes cambiar las fechas en los filtros
           </p>
         </div>
         <div className="flex items-center gap-2">
