@@ -15,6 +15,10 @@ export interface Usuario {
   usuario: string;
   clave: string;
   codigo: number;
+  codigoUsuario?: string;
+  sucursal?: string;
+  caja?: string;
+  cobrador?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -93,6 +97,7 @@ export interface Cobro {
   contratoReferencia?: string;
   numeroLetra?: number;
   letrasPagadas?: Array<{ numero: number; monto: number }>;
+  totalLetras?: number;
   numeroComprobante?: string;
   monto: number;
   saldoAnterior: number;
@@ -109,6 +114,9 @@ export interface Cobro {
   latitude?: number;
   longitude?: number;
   createdBy?: string;
+  sucursal?: string;
+  caja?: string;
+  cobrador?: string;
   createdAt?: Date;
   updatedAt?: Date;
   syncStatus?: 'pending' | 'synced' | 'error';

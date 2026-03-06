@@ -1,8 +1,9 @@
 'use client';
 
-import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Usuario } from '@/lib/types';
+import EditarUsuarioModal from '@/components/dashboard/EditarUsuarioModal';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -11,6 +12,7 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
   useEffect(() => {
     fetchUsuarios();
@@ -145,14 +147,23 @@ export default function UsuariosPage() {
                       {formatDate(usuario.updatedAt)}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => usuario.id && handleDelete(usuario.id)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        disabled={!usuario.id}
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setUsuarioEditando(usuario)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Editar usuario"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => usuario.id && handleDelete(usuario.id)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          disabled={!usuario.id}
+                          title="Eliminar usuario"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -203,6 +214,11 @@ export default function UsuariosPage() {
           </div>
         )}
       </div>
+      <EditarUsuarioModal
+        usuario={usuarioEditando}
+        onClose={() => setUsuarioEditando(null)}
+        onSave={fetchUsuarios}
+      />
     </div>
   );
 }

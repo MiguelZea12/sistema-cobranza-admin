@@ -26,6 +26,7 @@ export default function CobrosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsuario, setSelectedUsuario] = useState<string>('');
   const [selectedFormaPago, setSelectedFormaPago] = useState<string>('');
+  const [selectedSucursal, setSelectedSucursal] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState(getHoy());
   const [fechaFin, setFechaFin] = useState(getHoy());
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +39,7 @@ export default function CobrosPage() {
   
   // Listas únicas
   const [usuarios, setUsuarios] = useState<string[]>([]);
+  const [sucursales, setSucursales] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCobros();
@@ -45,7 +47,7 @@ export default function CobrosPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, fechaInicio, fechaFin]);
+  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, selectedSucursal, fechaInicio, fechaFin]);
 
   const fetchCobros = async () => {
     try {
@@ -62,6 +64,14 @@ export default function CobrosPage() {
         )
       );
       setUsuarios(uniqueUsuarios.sort());
+
+      // Extraer sucursales únicas
+      const uniqueSucursales: string[] = Array.from(
+        new Set(
+          data.map((c: Cobro) => c.sucursal).filter((s: any): s is string => typeof s === 'string' && s.trim() !== '')
+        )
+      );
+      setSucursales(uniqueSucursales.sort());
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -85,6 +95,11 @@ export default function CobrosPage() {
     // Filtro por usuario
     if (selectedUsuario) {
       filtered = filtered.filter(c => c.createdBy === selectedUsuario);
+    }
+
+    // Filtro por sucursal
+    if (selectedSucursal) {
+      filtered = filtered.filter(c => c.sucursal === selectedSucursal);
     }
 
     // Filtro por forma de pago
@@ -131,6 +146,7 @@ export default function CobrosPage() {
     setSearchTerm('');
     setSelectedUsuario('');
     setSelectedFormaPago('');
+    setSelectedSucursal('');
     setFechaInicio(getHoy());
     setFechaFin(getHoy());
   };
@@ -259,7 +275,7 @@ export default function CobrosPage() {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Filtros</h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 overflow-hidden">
           {/* Búsqueda */}
           <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -303,6 +319,30 @@ export default function CobrosPage() {
               <option value="transferencia">Transferencia</option>
               <option value="cheque">Cheque</option>
               <option value="tarjeta">Tarjeta</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+              <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+            </div>
+          </div>
+
+          {/* Sucursal */}
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <select
+              value={selectedSucursal}
+              onChange={(e) => setSelectedSucursal(e.target.value)}
+              className="w-full pl-10 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white truncate"
+            >
+              <option value="">Todas las sucursales</option>
+              {sucursales.length > 0
+                ? sucursales.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))
+                : [
+                    <option key="Esmeralda" value="Esmeralda">Esmeralda</option>,
+                    <option key="Jipijapa" value="Jipijapa">Jipijapa</option>,
+                  ]
+              }
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
               <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>

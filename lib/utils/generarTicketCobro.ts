@@ -33,15 +33,16 @@ function buildTicketHTML(cobro: Cobro): string {
     : '';
 
   let seccionCuotas = '';
+  const totalLetras = cobro.totalLetras || 58;
   if (cobro.letrasPagadas && cobro.letrasPagadas.length > 0) {
     const items = cobro.letrasPagadas
-      .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/58'}: ${lp.monto.toFixed(2)} USD</span></div>`)
+      .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/'+totalLetras}: ${lp.monto.toFixed(2)} USD</span></div>`)
       .join('');
     seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTAS PAGADAS:</div>
       ${items}`;
   } else if (cobro.numeroLetra !== undefined && cobro.numeroLetra !== null) {
-    const label = cobro.numeroLetra === 0 ? 'ENTRADA' : String(cobro.numeroLetra).padStart(2,'0')+'/58';
+    const label = cobro.numeroLetra === 0 ? 'ENTRADA' : String(cobro.numeroLetra).padStart(2,'0')+'/'+totalLetras;
     seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTA:</div>
       <div class="detalle-row"><span>${label}</span></div>`;
