@@ -80,6 +80,7 @@ function buildTicketHTML(cobro: Cobro): string {
 <div class="ticket-wrapper">
   <div class="header">
     ${LOGO_BASE64 ? '<img src="' + LOGO_BASE64 + '" class="logo-img" alt="Logo">' : ''}
+    <div style="text-align:center;font-size:11pt;font-weight:bold;letter-spacing:1px;margin-bottom:2mm;">Cejardepa</div>
     <div class="linea-puntos"></div>
     <div class="num-comprobante">NUM. COMPROBANTE: ${numComprobante}</div>
     <div class="fecha-emision">FECHA DE EMISION: ${fechaStr} ${horaStr}</div>
