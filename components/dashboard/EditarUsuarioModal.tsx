@@ -151,7 +151,7 @@ export default function EditarUsuarioModal({ usuario, onClose, onSave }: EditarU
             </p>
           </div>
 
-          {/* Email Firebase Auth */}}
+          {/* Email Firebase Auth */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email Firebase Auth
