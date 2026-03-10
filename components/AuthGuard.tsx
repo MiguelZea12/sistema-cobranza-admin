@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 // Rutas accesibles por rol
-const CAJERO_ALLOWED = ['/dashboard/cobrar'];
+const CAJERO_ALLOWED = ['/dashboard/cobrar', '/dashboard/cobros'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
