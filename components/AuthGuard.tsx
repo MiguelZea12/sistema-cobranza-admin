@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
+// Rutas accesibles por rol
+const CAJERO_ALLOWED = ['/dashboard/cobrar'];
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -11,16 +14,37 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = () => {
-      const user = localStorage.getItem('user');
-      
-      if (!user && pathname !== '/login') {
+      const userRaw = localStorage.getItem('user');
+
+      if (!userRaw && pathname !== '/login') {
         router.push('/login');
-      } else if (user && pathname === '/login') {
-        router.push('/dashboard');
-      } else {
-        setIsAuthenticated(true);
+        setLoading(false);
+        return;
       }
-      
+
+      if (userRaw && pathname === '/login') {
+        const user = JSON.parse(userRaw);
+        router.push(user.rol === 'cajero' ? '/dashboard/cobrar' : '/dashboard');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar acceso por rol si el usuario está autenticado
+      if (userRaw) {
+        const user = JSON.parse(userRaw);
+        if (user.rol === 'cajero') {
+          const allowed = CAJERO_ALLOWED.some(
+            (route) => pathname === route || pathname.startsWith(route + '/')
+          );
+          if (!allowed) {
+            router.replace('/dashboard/cobrar');
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      setIsAuthenticated(true);
       setLoading(false);
     };
 

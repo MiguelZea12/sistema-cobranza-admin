@@ -16,6 +16,8 @@ export interface Usuario {
   clave: string;
   codigo: number;
   codigoUsuario?: string;
+  email?: string;       // Email de Firebase Auth vinculado a este usuario
+  rol?: 'admin' | 'cajero'; // Rol del usuario en el panel web
   sucursal?: string;
   caja?: string;
   cobrador?: string;
@@ -62,6 +64,18 @@ export interface Cliente {
   updatedAt?: Date;
 }
 
+export interface LetraContrato {
+  numero: number; // 0 = entrada, 1,2,3... = letras
+  fechaVencimiento: any;
+  valor: number;
+  pago: number;
+  valordevo: number;
+  rtfuente: number;
+  rtiva: number;
+  pendiente: number;
+  estado: 'pendiente' | 'pagado' | 'vencido' | 'parcial';
+}
+
 export interface ContratoCliente {
   transaccion: string;
   tipoDoc: string;
@@ -77,6 +91,7 @@ export interface ContratoCliente {
   diasMora: number;
   estadoMora: string;
   montoUltimoPago?: number;
+  letras?: LetraContrato[];
 }
 
 export interface DashboardStats {

@@ -21,14 +21,26 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
-      // Guardar sesión
-      localStorage.setItem('user', JSON.stringify({
+
+      // Cargar perfil completo desde Firestore (sucursal, caja, cobrador, usuario)
+      let perfil: Record<string, any> = {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || user.email
-      }));
-      
+        displayName: user.displayName || user.email,
+      };
+      try {
+        const profileRes = await fetch(`/api/auth/profile?email=${encodeURIComponent(user.email || '')}`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData.usuario) {
+            perfil = { ...perfil, ...profileData.usuario };
+          }
+        }
+      } catch {
+        // Continuar sin perfil extendido
+      }
+
+      localStorage.setItem('user', JSON.stringify(perfil));
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Error:', err);

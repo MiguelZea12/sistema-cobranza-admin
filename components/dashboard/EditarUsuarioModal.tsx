@@ -17,6 +17,8 @@ export default function EditarUsuarioModal({ usuario, onClose, onSave }: EditarU
   const [sucursal, setSucursal] = useState('');
   const [caja, setCaja] = useState('');
   const [cobrador, setCobrador] = useState('');
+  const [email, setEmail] = useState('');
+  const [rol, setRol] = useState<'admin' | 'cajero'>('cajero');
   const [cobradores, setCobradores] = useState<Cobrador[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingCobradores, setLoadingCobradores] = useState(true);
@@ -27,6 +29,8 @@ export default function EditarUsuarioModal({ usuario, onClose, onSave }: EditarU
       setSucursal(usuario.sucursal || '');
       setCaja(usuario.caja || '');
       setCobrador(usuario.cobrador || '');
+      setEmail(usuario.email || '');
+      setRol((usuario.rol as 'admin' | 'cajero') || 'cajero');
     }
   }, [usuario]);
 
@@ -55,7 +59,7 @@ export default function EditarUsuarioModal({ usuario, onClose, onSave }: EditarU
       const res = await fetch('/api/usuarios', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: usuario.id, sucursal, caja, cobrador }),
+        body: JSON.stringify({ id: usuario.id, sucursal, caja, cobrador, email: email.trim() || undefined, rol }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -113,6 +117,56 @@ export default function EditarUsuarioModal({ usuario, onClose, onSave }: EditarU
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
+          </div>
+
+          {/* Rol web */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Rol en el panel web</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setRol('cajero')}
+                className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                  rol === 'cajero'
+                    ? 'bg-green-600 border-green-600 text-white'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-green-400'
+                }`}
+              >
+                Cajero
+              </button>
+              <button
+                type="button"
+                onClick={() => setRol('admin')}
+                className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                  rol === 'admin'
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-400'
+                }`}
+              >
+                Administrador
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              {rol === 'cajero' ? 'Solo puede acceder al módulo Cobrar.' : 'Acceso completo a todos los módulos.'}
+            </p>
+          </div>
+
+          {/* Email Firebase Auth */}}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Firebase Auth
+              <span className="ml-1 text-xs text-gray-400 font-normal">(para login web)</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ej: cajaesmeraldas@cobranza.com"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Vincula este usuario con una cuenta de Firebase Auth para que sus cobros queden correctamente asignados.
+            </p>
           </div>
 
           {/* Cobrador */}

@@ -2,24 +2,25 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { 
   LayoutDashboard, 
   UserCircle, 
-  Settings,
   Calculator,
   DollarSign,
-  LogOut,
   X,
-  MapPin
+  MapPin,
+  Banknote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCircle },
-  { name: 'Tracking Rutas', href: '/dashboard/tracking', icon: MapPin },
-  { name: 'Cobros', href: '/dashboard/cobros', icon: DollarSign },
-  { name: 'Arqueos', href: '/dashboard/encajes', icon: Calculator },
+const ALL_NAVIGATION = [
+  { name: 'Dashboard',     href: '/dashboard',           icon: LayoutDashboard, roles: ['admin'] },
+  { name: 'Usuarios',      href: '/dashboard/usuarios',  icon: UserCircle,       roles: ['admin'] },
+  { name: 'Tracking Rutas',href: '/dashboard/tracking',  icon: MapPin,           roles: ['admin'] },
+  { name: 'Cobrar',        href: '/dashboard/cobrar',    icon: Banknote,         roles: ['admin', 'cajero'] },
+  { name: 'Cobros',        href: '/dashboard/cobros',    icon: DollarSign,       roles: ['admin'] },
+  { name: 'Arqueos',       href: '/dashboard/encajes',   icon: Calculator,       roles: ['admin'] },
 ];
 
 interface SidebarProps {
@@ -29,6 +30,19 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [rol, setRol] = useState<string>('admin');
+
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        setRol(parsed.rol || 'admin');
+      }
+    } catch { /* ignorar */ }
+  }, []);
+
+  const navigation = ALL_NAVIGATION.filter((item) => item.roles.includes(rol));
 
   return (
     <>

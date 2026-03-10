@@ -1,9 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from '@/lib/firebase/admin';
 import { Cobro } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const {
+      clienteId,
+      clienteCedula,
+      clienteNombre,
+      monto,
+      saldoAnterior,
+      saldoNuevo,
+      formaPago,
+      observaciones,
+      imageUrl,
+      contratoId,
+      contratoReferencia,
+      letrasPagadas,
+      totalLetras,
+      numeroComprobante,
+      datosCheque,
+      tipoTarjeta,
+      sucursal,
+      caja,
+      cobrador,
+      createdBy,
+      contratosActualizados,
+      nuevoSaldoPendiente,
+      nuevoSaldoVencido,
+      nuevoSaldoPorVencer,
+    } = body;
+
+    if (!clienteId || !monto || !formaPago) {
+      return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
+    }
+
+    const db = adminDb();
+
+    // Construir objeto cobro
+    const cobroData: any = {
+      clienteId,
+      clienteCedula,
+      clienteNombre,
+      monto,
+      saldoAnterior,
+      saldoNuevo,
+      formaPago,
+      fecha: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      syncStatus: 'pending',
+      offlineSync: false,
+    };
+
+    if (contratoId) cobroData.contratoId = contratoId;
+    if (contratoReferencia) cobroData.contratoReferencia = contratoReferencia;
+    if (observaciones) cobroData.observaciones = observaciones;
+    if (imageUrl) cobroData.imageUrl = imageUrl;
+    if (letrasPagadas && letrasPagadas.length > 0) cobroData.letrasPagadas = letrasPagadas;
+    if (totalLetras !== undefined) cobroData.totalLetras = totalLetras;
+    if (numeroComprobante) cobroData.numeroComprobante = numeroComprobante;
+    if (datosCheque) cobroData.datosCheque = datosCheque;
+    if (tipoTarjeta) cobroData.tipoTarjeta = tipoTarjeta;
+    if (sucursal) cobroData.sucursal = sucursal;
+    if (caja) cobroData.caja = caja;
+    if (cobrador) cobroData.cobrador = cobrador;
+    if (createdBy) cobroData.createdBy = createdBy;
+
+    // Guardar cobro en Firestore
+    const cobroRef = await db.collection('cobros').add(cobroData);
+
+    // Actualizar saldos del cliente
+    const clienteUpdateData: any = {
+      saldoPendiente: nuevoSaldoPendiente,
+      saldoVencido: nuevoSaldoVencido,
+      saldoPorVencer: nuevoSaldoPorVencer,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (contratosActualizados) {
+      clienteUpdateData.contratos = contratosActualizados;
+    }
+
+    await db.collection('clientes').doc(clienteId).update(clienteUpdateData);
+
+    return NextResponse.json({ id: cobroRef.id, success: true });
+  } catch (error: any) {
+    console.error('Error registrando cobro:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
