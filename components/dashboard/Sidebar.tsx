@@ -18,7 +18,7 @@ const ALL_NAVIGATION = [
   { name: 'Dashboard',     href: '/dashboard',           icon: LayoutDashboard, roles: ['admin'] },
   { name: 'Usuarios',      href: '/dashboard/usuarios',  icon: UserCircle,       roles: ['admin'] },
   { name: 'Tracking Rutas',href: '/dashboard/tracking',  icon: MapPin,           roles: ['admin'] },
-  { name: 'Cobrar',        href: '/dashboard/cobrar',    icon: Banknote,         roles: ['admin', 'cajero'] },
+  { name: 'Cobrar',        href: '/dashboard/cobrar',    icon: Banknote,         roles: ['cajero'] },
   { name: 'Cobros',        href: '/dashboard/cobros',    icon: DollarSign,       roles: ['admin'] },
   { name: 'Arqueos',       href: '/dashboard/encajes',   icon: Calculator,       roles: ['admin'] },
 ];
