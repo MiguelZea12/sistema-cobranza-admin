@@ -152,3 +152,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, createdBy, cobrador, caja, sucursal } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID del cobro requerido' }, { status: 400 });
+    }
+
+    const db = adminDb();
+    const updateData: any = { updatedAt: FieldValue.serverTimestamp() };
+    if (createdBy !== undefined) updateData.createdBy = createdBy;
+    if (cobrador !== undefined) updateData.cobrador = cobrador;
+    if (caja !== undefined) updateData.caja = caja;
+    if (sucursal !== undefined) updateData.sucursal = sucursal;
+
+    await db.collection('cobros').doc(id).update(updateData);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error actualizando cobro:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
