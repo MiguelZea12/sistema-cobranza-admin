@@ -42,6 +42,36 @@ export async function POST(request: NextRequest) {
 
     const db = adminDb();
 
+    // Generar número de comprobante si no viene del cliente
+    let numeroComprobanteGenerado = numeroComprobante;
+    if (!numeroComprobanteGenerado && createdBy) {
+      try {
+        // Buscar el documento del usuario por campo 'usuario'
+        const usuarioSnap = await db.collection('usuarios')
+          .where('usuario', '==', createdBy)
+          .limit(1)
+          .get();
+
+        if (!usuarioSnap.empty) {
+          const usuarioRef = usuarioSnap.docs[0].ref;
+          numeroComprobanteGenerado = await db.runTransaction(async (transaction) => {
+            const usuarioDoc = await transaction.get(usuarioRef);
+            const userData = usuarioDoc.data()!;
+            const codigoUsuario = (userData.codigoUsuario || '001').toString().padStart(3, '0');
+            const nuevaSecuencia = (userData.secuenciaComprobante || 0) + 1;
+            transaction.update(usuarioRef, {
+              secuenciaComprobante: nuevaSecuencia,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+            return `${codigoUsuario}${nuevaSecuencia.toString().padStart(6, '0')}`;
+          });
+        }
+      } catch (e) {
+        // No crítico, continuar sin comprobante
+        console.warn('No se pudo generar número de comprobante:', e);
+      }
+    }
+
     // Construir objeto cobro
     const cobroData: any = {
       clienteId,
@@ -64,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (imageUrl) cobroData.imageUrl = imageUrl;
     if (letrasPagadas && letrasPagadas.length > 0) cobroData.letrasPagadas = letrasPagadas;
     if (totalLetras !== undefined) cobroData.totalLetras = totalLetras;
-    if (numeroComprobante) cobroData.numeroComprobante = numeroComprobante;
+    if (numeroComprobanteGenerado) cobroData.numeroComprobante = numeroComprobanteGenerado;
     if (datosCheque) cobroData.datosCheque = datosCheque;
     if (tipoTarjeta) cobroData.tipoTarjeta = tipoTarjeta;
     if (sucursal) cobroData.sucursal = sucursal;
