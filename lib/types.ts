@@ -82,6 +82,7 @@ export interface ContratoCliente {
   fechaEmision: Date;
   referencia?: string;
   totalContrato: number;
+  pago: number; // Total pagado del contrato
   saldoVencido: number;
   saldoPorVencer: number;
   totalLetras: number;

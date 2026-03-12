@@ -258,7 +258,7 @@ function CobroModal({
   }, []);
 
   const calcularSaldoTotal = () => {
-    if (contratoSeleccionado) return contratoSeleccionado.saldoVencido + contratoSeleccionado.saldoPorVencer;
+    if (contratoSeleccionado) return (contratoSeleccionado.totalContrato || 0) - (contratoSeleccionado.pago || 0);
     return cliente.saldoPendiente;
   };
 
@@ -342,17 +342,17 @@ function CobroModal({
           const letrasActualizadas = (contrato.letras || []).map((letra) => {
             const lp = letrasPagadasArray.find((x) => x.numero === letra.numero);
             if (!lp) return letra;
-            const nuevoPago = letra.pago + lp.monto;
-            const nuevoPendiente = Math.max(0, letra.valor - nuevoPago);
+            const nuevoPago = Math.round((letra.pago + lp.monto) * 100) / 100;
+            const nuevoPendiente = Math.max(0, Math.round((letra.valor - nuevoPago) * 100) / 100);
             let nuevoEstado: LetraContrato['estado'] = letra.estado;
-            if (nuevoPago >= letra.valor) nuevoEstado = 'pagado';
+            if (nuevoPendiente <= 0) nuevoEstado = 'pagado';
             else if (nuevoPago > 0) nuevoEstado = 'parcial';
             return { ...letra, pago: nuevoPago, pendiente: nuevoPendiente, estado: nuevoEstado };
           });
           let sv = 0, spv = 0, lpc = 0;
           letrasActualizadas.forEach((l) => {
             if (l.estado === 'pagado') { lpc++; return; }
-            if (l.pendiente > 0) {
+            if (Math.round(l.pendiente * 100) > 0) {
               const fv = l.fechaVencimiento ? new Date(l.fechaVencimiento) : null;
               if (fv && fv < hoy) sv += l.pendiente;
               else spv += l.pendiente;
@@ -361,6 +361,7 @@ function CobroModal({
           return {
             ...contrato,
             letras: letrasActualizadas,
+            pago: (contrato.pago || 0) + montoTotal,
             saldoVencido: sv,
             saldoPorVencer: spv,
             letrasPagadas: lpc,
@@ -378,7 +379,7 @@ function CobroModal({
       const nuevoSaldoPendiente = nuevoSaldoVencido + nuevoSaldoPorVencer;
 
       const saldoAnterior = contratoSeleccionado
-        ? contratoSeleccionado.saldoVencido + contratoSeleccionado.saldoPorVencer
+        ? (contratoSeleccionado.totalContrato || 0) - (contratoSeleccionado.pago || 0)
         : cliente.saldoPendiente;
       const saldoNuevo = saldoAnterior - montoTotal;
 
@@ -448,7 +449,7 @@ function CobroModal({
   const letrasPendientes = useMemo(() => {
     if (!contratoSeleccionado?.letras) return [];
     return contratoSeleccionado.letras
-      .filter((l) => l.pendiente > 0)
+      .filter((l) => Math.round(l.pendiente * 100) > 0)
       .sort((a, b) => a.numero - b.numero);
   }, [contratoSeleccionado]);
 
@@ -511,7 +512,7 @@ function CobroModal({
                         </span>
                       </div>
                       <p className={`text-base font-bold ${activo ? 'text-white' : 'text-gray-900'}`}>
-                        {formatCurrency(c.saldoVencido + c.saldoPorVencer)}
+                        {formatCurrency((c.totalContrato || 0) - (c.pago || 0))}
                       </p>
                       <p className={`text-xs mt-0.5 ${activo ? 'text-sky-100' : 'text-gray-500'}`}>
                         {c.letrasPagadas}/{c.totalLetras} letras
@@ -740,6 +741,14 @@ function CobroModal({
 
           {/* Saldo restante */}
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            {letrasSeleccionadas.size > 0 && (
+              <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                <span className="text-sm font-semibold text-blue-700">
+                  Total a cobrar ({letrasSeleccionadas.size} {letrasSeleccionadas.size === 1 ? 'letra' : 'letras'}):
+                </span>
+                <span className="text-lg font-bold text-blue-700">{formatCurrency(calcularMontoSeleccionado())}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Monto seleccionado:</span>
               <span className="font-bold text-gray-900">{formatCurrency(calcularMontoSeleccionado())}</span>
