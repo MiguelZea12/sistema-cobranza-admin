@@ -57,7 +57,7 @@ function agruparClientesPorCedula(clientesRaw: Cliente[]): Cliente[] {
       }
       let sp = 0, sv = 0, spv = 0;
       existente.contratos?.forEach((c) => {
-        sp += (c.saldoVencido || 0) + (c.saldoPorVencer || 0);
+        sp += (c.totalContrato || 0) - (c.pago || 0) - (c.nc || 0);
         sv += c.saldoVencido || 0;
         spv += c.saldoPorVencer || 0;
       });
@@ -258,7 +258,11 @@ function CobroModal({
   }, []);
 
   const calcularSaldoTotal = () => {
-    if (contratoSeleccionado) return (contratoSeleccionado.totalContrato || 0) - (contratoSeleccionado.pago || 0);
+    if (contratoSeleccionado) {
+      return (contratoSeleccionado.totalContrato || 0)
+        - (contratoSeleccionado.pago || 0)
+        - (contratoSeleccionado.nc || 0);
+    }
     return cliente.saldoPendiente;
   };
 
@@ -376,10 +380,15 @@ function CobroModal({
         nuevoSaldoVencido += c.saldoVencido || 0;
         nuevoSaldoPorVencer += c.saldoPorVencer || 0;
       });
-      const nuevoSaldoPendiente = nuevoSaldoVencido + nuevoSaldoPorVencer;
+      const nuevoSaldoPendiente = contratosActualizados.reduce(
+        (sum, c) => sum + ((c.totalContrato || 0) - (c.pago || 0) - (c.nc || 0)),
+        0,
+      );
 
       const saldoAnterior = contratoSeleccionado
-        ? (contratoSeleccionado.totalContrato || 0) - (contratoSeleccionado.pago || 0)
+        ? (contratoSeleccionado.totalContrato || 0)
+          - (contratoSeleccionado.pago || 0)
+          - (contratoSeleccionado.nc || 0)
         : cliente.saldoPendiente;
       const saldoNuevo = saldoAnterior - montoTotal;
 
@@ -512,7 +521,7 @@ function CobroModal({
                         </span>
                       </div>
                       <p className={`text-base font-bold ${activo ? 'text-white' : 'text-gray-900'}`}>
-                        {formatCurrency((c.totalContrato || 0) - (c.pago || 0))}
+                        {formatCurrency((c.totalContrato || 0) - (c.pago || 0) - (c.nc || 0))}
                       </p>
                       <p className={`text-xs mt-0.5 ${activo ? 'text-sky-100' : 'text-gray-500'}`}>
                         {c.letrasPagadas}/{c.totalLetras} letras

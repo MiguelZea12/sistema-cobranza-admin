@@ -83,6 +83,7 @@ export interface ContratoCliente {
   referencia?: string;
   totalContrato: number;
   pago: number; // Total pagado del contrato
+  nc: number; // Nota de credito del contrato
   saldoVencido: number;
   saldoPorVencer: number;
   totalLetras: number;
