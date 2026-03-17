@@ -154,7 +154,7 @@ function ClienteCard({
                 <FileText className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
                 <span>
                   Contrato #{contrato.referencia || contrato.transaccion} · Letras{' '}
-                  {contrato.letrasPagadas}/{contrato.totalLetras}
+                  {contrato.letrasPagadas}/{contrato.totalLetras > 0 ? contrato.totalLetras - 1 : contrato.totalLetras}
                 </span>
               </div>
               {contrato.linea && (
@@ -553,7 +553,7 @@ function CobroModal({
                         {formatCurrency((c.totalContrato || 0) - (c.pago || 0) - (c.nc || 0))}
                       </p>
                       <p className={`text-xs mt-0.5 ${activo ? 'text-sky-100' : 'text-gray-500'}`}>
-                        {c.letrasPagadas}/{c.totalLetras} letras
+                        {c.letrasPagadas}/{c.totalLetras > 0 ? c.totalLetras - 1 : c.totalLetras} letras
                       </p>
                     </button>
                   );

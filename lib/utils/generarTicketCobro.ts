@@ -37,7 +37,10 @@ function buildTicketHTML(cobro: Cobro): string {
     : '';
 
   let seccionCuotas = '';
-  const totalLetras = cobro.totalLetras || 58;
+  const totalLetrasBruto = cobro.totalLetras || 58;
+  // Restamos 1 porque el total incluye la entrada
+  const totalLetras = totalLetrasBruto > 0 ? totalLetrasBruto - 1 : totalLetrasBruto;
+  
   if (cobro.letrasPagadas && cobro.letrasPagadas.length > 0) {
     const items = cobro.letrasPagadas
       .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/'+totalLetras}: ${lp.monto.toFixed(2)} USD</span></div>`)
