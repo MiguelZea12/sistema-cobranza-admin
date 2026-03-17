@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       imageUrl,
       contratoId,
       contratoReferencia,
+      contratoLinea,
       letrasPagadas,
       totalLetras,
       numeroComprobante,
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     if (contratoId) cobroData.contratoId = contratoId;
     if (contratoReferencia) cobroData.contratoReferencia = contratoReferencia;
+    if (contratoLinea) cobroData.contratoLinea = contratoLinea;
     if (observaciones) cobroData.observaciones = observaciones;
     if (imageUrl) cobroData.imageUrl = imageUrl;
     if (letrasPagadas && letrasPagadas.length > 0) cobroData.letrasPagadas = letrasPagadas;

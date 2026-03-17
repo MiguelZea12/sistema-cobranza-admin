@@ -472,14 +472,24 @@ export default function CobrosPage() {
               >
                 {/* Header de la card */}
                 <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <User className="h-5 w-5 text-white" />
                       <h3 className="font-semibold text-white">{cobro.clienteNombre}</h3>
                     </div>
-                    <DollarSign className="h-5 w-5 text-white" />
+                    {cobro.syncStatus && (
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
+                        cobro.syncStatus === 'synced' 
+                          ? 'bg-green-100 text-green-700' 
+                          : cobro.syncStatus === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {cobro.syncStatus === 'synced' ? 'Sincronizado' : cobro.syncStatus === 'pending' ? 'Pendiente' : 'Error'}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-green-100" />
                     <p className="text-sm text-green-100">{cobro.clienteCedula}</p>
                   </div>

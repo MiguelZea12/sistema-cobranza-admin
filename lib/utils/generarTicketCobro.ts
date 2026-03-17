@@ -29,7 +29,11 @@ function buildTicketHTML(cobro: Cobro): string {
   const seccionContrato = cobro.contratoId
     ? `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CONTRATO:</div>
-      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>`
+      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>
+      ${cobro.contratoLinea ? `
+      <div class="linea-puntos"></div>
+      <div class="seccion-titulo">PRODUCTO:</div>
+      <div class="cliente-nombre">${cobro.contratoLinea}</div>` : ''}`
     : '';
 
   let seccionCuotas = '';

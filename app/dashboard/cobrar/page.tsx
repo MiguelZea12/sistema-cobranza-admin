@@ -5,7 +5,7 @@ import {
   Search, ChevronDown, ChevronUp, MapPin, Phone, Briefcase, Calendar,
   DollarSign, CreditCard, X, Check, User, RefreshCw, Loader2,
   ChevronLeft, ChevronRight, AlertTriangle, FileText, Upload, Image as ImageIcon,
-  Banknote, Smartphone, FileCheck,
+  Banknote, Smartphone, FileCheck, Package
 } from 'lucide-react';
 import { Cliente, ContratoCliente, LetraContrato } from '@/lib/types';
 
@@ -149,13 +149,22 @@ function ClienteCard({
             </div>
           )}
           {contrato && (
-            <div className="flex items-start gap-2 text-sm text-gray-600">
-              <FileText className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
-              <span>
-                Contrato #{contrato.referencia || contrato.transaccion} · Letras{' '}
-                {contrato.letrasPagadas}/{contrato.totalLetras}
-              </span>
-            </div>
+            <>
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <FileText className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
+                <span>
+                  Contrato #{contrato.referencia || contrato.transaccion} · Letras{' '}
+                  {contrato.letrasPagadas}/{contrato.totalLetras}
+                </span>
+              </div>
+              {contrato.linea && (
+                <div className="flex items-start gap-2 text-sm">
+                  <Package className="h-4 w-4 shrink-0 mt-0.5 text-sky-500" />
+                  <span className="text-gray-600 font-medium">Producto: </span>
+                  <span className="text-sky-700 font-medium">{contrato.linea}</span>
+                </div>
+              )}
+            </>
           )}
           {contrato?.fechaUltimoPago && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -364,6 +373,7 @@ function CobroModal({
           });
           return {
             ...contrato,
+            linea: contratoSeleccionado.linea || contrato.linea,
             letras: letrasActualizadas,
             pago: (contrato.pago || 0) + montoTotal,
             saldoVencido: sv,
@@ -401,6 +411,15 @@ function CobroModal({
             }
           : undefined;
 
+      // Obtener linea del cliente o de los contratos actualizados
+      const contratoActualizado = contratosActualizados?.find(
+        (c) => c.transaccion === contratoSeleccionado?.transaccion
+      );
+      const contratoLinea 
+        = contratoActualizado?.linea 
+        || cliente.contratos?.find((c) => c.transaccion === contratoSeleccionado?.transaccion)?.linea
+        || contratoSeleccionado?.linea;
+
       const payload = {
         clienteId: cliente.id,
         clienteCedula: cliente.cedula,
@@ -413,6 +432,7 @@ function CobroModal({
         imageUrl,
         contratoId: contratoSeleccionado?.transaccion,
         contratoReferencia: contratoSeleccionado?.referencia,
+        contratoLinea,
         letrasPagadas: letrasPagadasArray,
         totalLetras: contratoSeleccionado?.totalLetras,
         datosCheque,
@@ -520,6 +540,15 @@ function CobroModal({
                           {c.referencia || c.transaccion}
                         </span>
                       </div>
+                      {c.linea && (
+                        <div className={`flex items-center gap-1.5 mb-1 ${activo ? 'text-sky-100' : 'text-gray-500'}`}>
+                          <Package className="h-3 w-3 shrink-0" />
+                          <p className={`text-xs truncate ${activo ? '' : 'font-medium'}`}>
+                            <span className="opacity-90">Producto: </span>
+                            <span className={activo ? 'font-bold' : 'text-sky-700'}>{c.linea}</span>
+                          </p>
+                        </div>
+                      )}
                       <p className={`text-base font-bold ${activo ? 'text-white' : 'text-gray-900'}`}>
                         {formatCurrency((c.totalContrato || 0) - (c.pago || 0) - (c.nc || 0))}
                       </p>

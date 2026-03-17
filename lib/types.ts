@@ -81,6 +81,7 @@ export interface ContratoCliente {
   tipoDoc: string;
   fechaEmision: Date;
   referencia?: string;
+  linea?: string; // Producto / línea (de SQL)
   totalContrato: number;
   pago: number; // Total pagado del contrato
   nc: number; // Nota de credito del contrato
@@ -112,6 +113,7 @@ export interface Cobro {
   clienteNombre: string;
   contratoId?: string;
   contratoReferencia?: string;
+  contratoLinea?: string; // Línea/producto del contrato
   numeroLetra?: number;
   letrasPagadas?: Array<{ numero: number; monto: number }>;
   totalLetras?: number;

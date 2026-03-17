@@ -50,7 +50,7 @@ export async function PUT(
     if (body.totalDeclarado !== undefined) {
       const currentData = encajeDoc.data();
       const totalCobrado = currentData?.totalCobrado || 0;
-      updateData.diferencia = totalCobrado - body.totalDeclarado;
+      updateData.diferencia = body.totalDeclarado - totalCobrado; // positivo = sobra, negativo = falta
     }
 
     await encajeRef.update(updateData);
