@@ -448,6 +448,12 @@ export default function EncajesPage() {
                         </div>
                       </details>
                     )}
+                    {(encaje.transferencia || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Transferencia declarada:</span>
+                        <span className="font-medium text-blue-700">{formatCurrency(encaje.transferencia || 0)}</span>
+                      </div>
+                    )}
                     {(encaje.totalCheques || 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Cheques declarados:</span>
@@ -521,7 +527,7 @@ export default function EncajesPage() {
                           ? 'text-red-600'
                           : 'text-gray-600'
                       }`}>
-                        {formatCurrency(Math.abs(encaje.diferencia))}
+                        {Math.abs(encaje.diferencia) > 0 ? formatCurrency(Math.abs(encaje.diferencia)) : '—'}
                       </span>
                     </div>
                   </div>

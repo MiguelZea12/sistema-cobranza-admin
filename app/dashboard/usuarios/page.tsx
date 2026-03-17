@@ -1,8 +1,9 @@
 'use client';
 
-import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Usuario } from '@/lib/types';
+import EditarUsuarioModal from '@/components/dashboard/EditarUsuarioModal';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -11,6 +12,7 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
   useEffect(() => {
     fetchUsuarios();
@@ -102,16 +104,19 @@ export default function UsuariosPage() {
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
                 <th className="px-6 py-3 font-medium text-gray-900">Usuario</th>
+                <th className="px-6 py-3 font-medium text-gray-900">Rol</th>
+                <th className="px-6 py-3 font-medium text-gray-900">Email Firebase</th>
+                <th className="px-6 py-3 font-medium text-gray-900">Sucursal</th>
+                <th className="px-6 py-3 font-medium text-gray-900">Caja</th>
+                <th className="px-6 py-3 font-medium text-gray-900">Cobrador</th>
                 <th className="px-6 py-3 font-medium text-gray-900">Código</th>
-                <th className="px-6 py-3 font-medium text-gray-900">Fecha Creación</th>
-                <th className="px-6 py-3 font-medium text-gray-900">Última Actualización</th>
                 <th className="px-6 py-3 font-medium text-gray-900">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
@@ -119,13 +124,13 @@ export default function UsuariosPage() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-red-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-red-500">
                     Error: {error}
                   </td>
                 </tr>
               ) : usuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     No hay usuarios registrados
                   </td>
                 </tr>
@@ -135,24 +140,59 @@ export default function UsuariosPage() {
                     <td className="px-6 py-4 font-medium text-gray-900">
                       {usuario.usuario}
                     </td>
+                    <td className="px-6 py-4">
+                      {usuario.rol === 'admin' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                          Administrador
+                        </span>
+                      ) : usuario.rol === 'cajero' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                          Cajero
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Sin asignar</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {usuario.email ? (
+                        <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                          {usuario.email}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Sin vincular</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {usuario.sucursal || <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {usuario.caja || <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {usuario.cobrador || <span className="text-gray-400">—</span>}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">
                       {usuario.codigo}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {formatDate(usuario.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {formatDate(usuario.updatedAt)}
-                    </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => usuario.id && handleDelete(usuario.id)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        disabled={!usuario.id}
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setUsuarioEditando(usuario)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Editar usuario"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => usuario.id && handleDelete(usuario.id)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          disabled={!usuario.id}
+                          title="Eliminar usuario"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -203,6 +243,11 @@ export default function UsuariosPage() {
           </div>
         )}
       </div>
+      <EditarUsuarioModal
+        usuario={usuarioEditando}
+        onClose={() => setUsuarioEditando(null)}
+        onSave={fetchUsuarios}
+      />
     </div>
   );
 }

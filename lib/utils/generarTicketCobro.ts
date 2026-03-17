@@ -29,19 +29,24 @@ function buildTicketHTML(cobro: Cobro): string {
   const seccionContrato = cobro.contratoId
     ? `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CONTRATO:</div>
-      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>`
+      <div class="info-row">${cobro.contratoReferencia || cobro.contratoId}</div>
+      ${cobro.contratoLinea ? `
+      <div class="linea-puntos"></div>
+      <div class="seccion-titulo">PRODUCTO:</div>
+      <div class="cliente-nombre">${cobro.contratoLinea}</div>` : ''}`
     : '';
 
   let seccionCuotas = '';
+  const totalLetras = cobro.totalLetras || 58;
   if (cobro.letrasPagadas && cobro.letrasPagadas.length > 0) {
     const items = cobro.letrasPagadas
-      .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/58'}: ${lp.monto.toFixed(2)} USD</span></div>`)
+      .map(lp => `<div class="detalle-row"><span>${lp.numero === 0 ? 'ENTRADA' : String(lp.numero).padStart(2,'0')+'/'+totalLetras}: ${lp.monto.toFixed(2)} USD</span></div>`)
       .join('');
     seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTAS PAGADAS:</div>
       ${items}`;
   } else if (cobro.numeroLetra !== undefined && cobro.numeroLetra !== null) {
-    const label = cobro.numeroLetra === 0 ? 'ENTRADA' : String(cobro.numeroLetra).padStart(2,'0')+'/58';
+    const label = cobro.numeroLetra === 0 ? 'ENTRADA' : String(cobro.numeroLetra).padStart(2,'0')+'/'+totalLetras;
     seccionCuotas = `<div class="linea-puntos"></div>
       <div class="seccion-titulo">CUOTA:</div>
       <div class="detalle-row"><span>${label}</span></div>`;
@@ -79,6 +84,7 @@ function buildTicketHTML(cobro: Cobro): string {
 <div class="ticket-wrapper">
   <div class="header">
     ${LOGO_BASE64 ? '<img src="' + LOGO_BASE64 + '" class="logo-img" alt="Logo">' : ''}
+    <div style="text-align:center;font-size:11pt;font-weight:bold;letter-spacing:1px;margin-bottom:2mm;">Cejardepa</div>
     <div class="linea-puntos"></div>
     <div class="num-comprobante">NUM. COMPROBANTE: ${numComprobante}</div>
     <div class="fecha-emision">FECHA DE EMISION: ${fechaStr} ${horaStr}</div>

@@ -41,3 +41,23 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, sucursal, caja, cobrador, email, rol } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+    }
+
+    const updateData: any = { sucursal, caja, cobrador };
+    if (email !== undefined) updateData.email = email;
+    if (rol !== undefined) updateData.rol = rol;
+
+    await service.saveUsuario(updateData, id);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

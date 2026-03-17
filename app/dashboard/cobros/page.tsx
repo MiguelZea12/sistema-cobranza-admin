@@ -1,8 +1,8 @@
 'use client';
 
-import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt, Printer } from 'lucide-react';
+import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt, Printer, Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Cobro } from '@/lib/types';
+import { Cobro, Usuario } from '@/lib/types';
 import { imprimirTicketCobro } from '@/lib/utils/generarTicketCobro';
 
 const ITEMS_PER_PAGE = 6;
@@ -26,6 +26,7 @@ export default function CobrosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsuario, setSelectedUsuario] = useState<string>('');
   const [selectedFormaPago, setSelectedFormaPago] = useState<string>('');
+  const [selectedSucursal, setSelectedSucursal] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState(getHoy());
   const [fechaFin, setFechaFin] = useState(getHoy());
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,17 +36,81 @@ export default function CobrosPage() {
   
   // ID del cobro cuyo PDF está generándose
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Editar cobrador
+  const [editingCobro, setEditingCobro] = useState<Cobro | null>(null);
+  const [usuariosList, setUsuariosList] = useState<Usuario[]>([]);
+  const [editUsuarioId, setEditUsuarioId] = useState('');
+  const [saving, setSaving] = useState(false);
   
   // Listas únicas
   const [usuarios, setUsuarios] = useState<string[]>([]);
+  const [sucursales, setSucursales] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCobros();
+    fetchUsuarios();
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, fechaInicio, fechaFin]);
+  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, selectedSucursal, fechaInicio, fechaFin]);
+
+  const fetchUsuarios = async () => {
+    try {
+      const res = await fetch('/api/usuarios');
+      if (res.ok) {
+        const data = await res.json();
+        setUsuariosList(data);
+      }
+    } catch {}
+  };
+
+  const handleEditCobrador = (cobro: Cobro) => {
+    setEditingCobro(cobro);
+    // Preseleccionar el usuario cuyo campo `usuario` coincide con createdBy
+    const match = usuariosList.find(u => u.usuario === cobro.createdBy);
+    setEditUsuarioId(match?.id || '');
+  };
+
+  const handleSaveCobrador = async () => {
+    if (!editingCobro?.id) return;
+    const selectedUser = usuariosList.find(u => u.id === editUsuarioId);
+    if (!selectedUser) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/cobros', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingCobro.id,
+          createdBy: selectedUser.usuario,
+          cobrador: selectedUser.cobrador || '',
+          caja: selectedUser.caja || '',
+          sucursal: selectedUser.sucursal || '',
+        }),
+      });
+      if (!res.ok) throw new Error('Error al guardar');
+      setCobros(prev =>
+        prev.map(c =>
+          c.id === editingCobro.id
+            ? {
+                ...c,
+                createdBy: selectedUser.usuario,
+                cobrador: selectedUser.cobrador,
+                caja: selectedUser.caja,
+                sucursal: selectedUser.sucursal,
+              }
+            : c
+        )
+      );
+      setEditingCobro(null);
+    } catch (err: any) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchCobros = async () => {
     try {
@@ -62,6 +127,14 @@ export default function CobrosPage() {
         )
       );
       setUsuarios(uniqueUsuarios.sort());
+
+      // Extraer sucursales únicas
+      const uniqueSucursales: string[] = Array.from(
+        new Set(
+          data.map((c: Cobro) => c.sucursal).filter((s: any): s is string => typeof s === 'string' && s.trim() !== '')
+        )
+      );
+      setSucursales(uniqueSucursales.sort());
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -85,6 +158,11 @@ export default function CobrosPage() {
     // Filtro por usuario
     if (selectedUsuario) {
       filtered = filtered.filter(c => c.createdBy === selectedUsuario);
+    }
+
+    // Filtro por sucursal
+    if (selectedSucursal) {
+      filtered = filtered.filter(c => c.sucursal === selectedSucursal);
     }
 
     // Filtro por forma de pago
@@ -131,6 +209,7 @@ export default function CobrosPage() {
     setSearchTerm('');
     setSelectedUsuario('');
     setSelectedFormaPago('');
+    setSelectedSucursal('');
     setFechaInicio(getHoy());
     setFechaFin(getHoy());
   };
@@ -259,7 +338,7 @@ export default function CobrosPage() {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Filtros</h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 overflow-hidden">
           {/* Búsqueda */}
           <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -303,6 +382,30 @@ export default function CobrosPage() {
               <option value="transferencia">Transferencia</option>
               <option value="cheque">Cheque</option>
               <option value="tarjeta">Tarjeta</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+              <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+            </div>
+          </div>
+
+          {/* Sucursal */}
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <select
+              value={selectedSucursal}
+              onChange={(e) => setSelectedSucursal(e.target.value)}
+              className="w-full pl-10 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white truncate"
+            >
+              <option value="">Todas las sucursales</option>
+              {sucursales.length > 0
+                ? sucursales.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))
+                : [
+                    <option key="Esmeralda" value="Esmeralda">Esmeralda</option>,
+                    <option key="Jipijapa" value="Jipijapa">Jipijapa</option>,
+                  ]
+              }
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
               <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -369,14 +472,24 @@ export default function CobrosPage() {
               >
                 {/* Header de la card */}
                 <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <User className="h-5 w-5 text-white" />
                       <h3 className="font-semibold text-white">{cobro.clienteNombre}</h3>
                     </div>
-                    <DollarSign className="h-5 w-5 text-white" />
+                    {cobro.syncStatus && (
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
+                        cobro.syncStatus === 'synced' 
+                          ? 'bg-green-100 text-green-700' 
+                          : cobro.syncStatus === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {cobro.syncStatus === 'synced' ? 'Sincronizado' : cobro.syncStatus === 'pending' ? 'Pendiente' : 'Error'}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-green-100" />
                     <p className="text-sm text-green-100">{cobro.clienteCedula}</p>
                   </div>
@@ -469,12 +582,19 @@ export default function CobrosPage() {
                       </div>
                     )}
 
-                    {cobro.createdBy && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Cobrador:</span>
-                        <span className="font-medium text-gray-900">{cobro.createdBy}</span>
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-gray-600">Cobrador:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium text-gray-900">{cobro.createdBy || '—'}</span>
+                        <button
+                          onClick={() => handleEditCobrador(cobro)}
+                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded"
+                          title="Editar cobrador"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-                    )}
+                    </div>
 
                     {(cobro.latitude && cobro.longitude) && (
                       <div className="flex items-center gap-1 text-sm text-gray-600">
@@ -619,6 +739,60 @@ export default function CobrosPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Modal Editar Cobrador */}
+      {editingCobro && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Editar Cobrador</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Recibo de <span className="font-medium text-gray-800">{editingCobro.clienteNombre}</span>
+            </p>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Usuario / Cobrador</label>
+              <select
+                value={editUsuarioId}
+                onChange={(e) => setEditUsuarioId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">— Seleccionar usuario —</option>
+                {usuariosList.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.usuario}{u.cobrador ? ` (${u.cobrador})` : ''}{u.sucursal ? ` — ${u.sucursal}` : ''}
+                  </option>
+                ))}
+              </select>
+              {editUsuarioId && (() => {
+                const u = usuariosList.find(x => x.id === editUsuarioId);
+                if (!u) return null;
+                return (
+                  <div className="mt-2 text-xs text-gray-500 space-y-0.5">
+                    {u.cobrador && <p>Cobrador: <span className="font-medium text-gray-700">{u.cobrador}</span></p>}
+                    {u.caja && <p>Caja: <span className="font-medium text-gray-700">{u.caja}</span></p>}
+                    {u.sucursal && <p>Sucursal: <span className="font-medium text-gray-700">{u.sucursal}</span></p>}
+                  </div>
+                );
+              })()}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setEditingCobro(null)}
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveCobrador}
+                disabled={saving || !editUsuarioId}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de Imagen */}

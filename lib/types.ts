@@ -15,6 +15,12 @@ export interface Usuario {
   usuario: string;
   clave: string;
   codigo: number;
+  codigoUsuario?: string;
+  email?: string;       // Email de Firebase Auth vinculado a este usuario
+  rol?: 'admin' | 'cajero'; // Rol del usuario en el panel web
+  sucursal?: string;
+  caja?: string;
+  cobrador?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -58,12 +64,27 @@ export interface Cliente {
   updatedAt?: Date;
 }
 
+export interface LetraContrato {
+  numero: number; // 0 = entrada, 1,2,3... = letras
+  fechaVencimiento: any;
+  valor: number;
+  pago: number;
+  valordevo: number;
+  rtfuente: number;
+  rtiva: number;
+  pendiente: number;
+  estado: 'pendiente' | 'pagado' | 'vencido' | 'parcial';
+}
+
 export interface ContratoCliente {
   transaccion: string;
   tipoDoc: string;
   fechaEmision: Date;
   referencia?: string;
+  linea?: string; // Producto / línea (de SQL)
   totalContrato: number;
+  pago: number; // Total pagado del contrato
+  nc: number; // Nota de credito del contrato
   saldoVencido: number;
   saldoPorVencer: number;
   totalLetras: number;
@@ -73,6 +94,7 @@ export interface ContratoCliente {
   diasMora: number;
   estadoMora: string;
   montoUltimoPago?: number;
+  letras?: LetraContrato[];
 }
 
 export interface DashboardStats {
@@ -91,8 +113,10 @@ export interface Cobro {
   clienteNombre: string;
   contratoId?: string;
   contratoReferencia?: string;
+  contratoLinea?: string; // Línea/producto del contrato
   numeroLetra?: number;
   letrasPagadas?: Array<{ numero: number; monto: number }>;
+  totalLetras?: number;
   numeroComprobante?: string;
   monto: number;
   saldoAnterior: number;
@@ -109,6 +133,9 @@ export interface Cobro {
   latitude?: number;
   longitude?: number;
   createdBy?: string;
+  sucursal?: string;
+  caja?: string;
+  cobrador?: string;
   createdAt?: Date;
   updatedAt?: Date;
   syncStatus?: 'pending' | 'synced' | 'error';
