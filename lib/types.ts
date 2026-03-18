@@ -127,6 +127,7 @@ export interface Cobro {
     numeroCheque: string;
     valor: number;
   };
+  tipoTarjeta?: string;
   fecha: Date;
   imageUrl?: string;
   observaciones?: string;
