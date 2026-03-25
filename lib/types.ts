@@ -139,8 +139,9 @@ export interface Cobro {
   cobrador?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  syncStatus?: 'pending' | 'synced' | 'error';
+  syncStatus?: 'pending' | 'synced' | 'error' | 'anulado';
   offlineSync?: boolean;
+  anulado?: boolean;
 }
 
 // Desglose de billetes y monedas

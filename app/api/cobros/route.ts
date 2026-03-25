@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, createdBy, cobrador, caja, sucursal, formaPago, datosCheque, tipoTarjeta } = body;
+    const { id, createdBy, cobrador, caja, sucursal, formaPago, datosCheque, tipoTarjeta, anulado } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID del cobro requerido' }, { status: 400 });
@@ -200,6 +200,12 @@ export async function PATCH(request: NextRequest) {
     if (cobrador !== undefined) updateData.cobrador = cobrador;
     if (caja !== undefined) updateData.caja = caja;
     if (sucursal !== undefined) updateData.sucursal = sucursal;
+    if (anulado !== undefined) {
+      updateData.anulado = anulado;
+      if (anulado) {
+        updateData.syncStatus = 'anulado';
+      }
+    }
     
     if (formaPago !== undefined) {
       updateData.formaPago = formaPago;
