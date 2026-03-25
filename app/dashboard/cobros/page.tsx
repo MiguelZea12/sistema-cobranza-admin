@@ -1,11 +1,25 @@
 'use client';
 
-import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt, Printer, Pencil } from 'lucide-react';
+import { DollarSign, Search, Filter, Calendar, User, CreditCard, Image as ImageIcon, X, MapPin, FileText, Hash, Receipt, Printer, Pencil, Ban } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Cobro, Usuario } from '@/lib/types';
 import { imprimirTicketCobro } from '@/lib/utils/generarTicketCobro';
 
 const ITEMS_PER_PAGE = 6;
+
+const BANCOS_ECUADOR = [
+  'Banco Pichincha', 'Banco de Guayaquil', 'Banco del Pacífico',
+  'Banco Bolivariano', 'Banco del Austro', 'Banco Internacional',
+  'Produbanco', 'Banco de Machala', 'Banco de Loja', 'Banco Amazonas',
+  'Banco Comercial de Manabí', 'Banco del Litoral', 'Banco Económico',
+  'Banco Capital', 'Banco Solidario', 'Banco ProCredit', 'BanEcuador', 'Otros',
+];
+
+const TIPOS_TARJETA = [
+  'Visa', 'Mastercard', 'Diners', 'American Express',
+  'Pacificard', 'Bankard', 'Cuota Fácil', 'Banco del Austro',
+  'Visa Electron', 'Discovery', 'Alia',
+];
 
 // Obtener fecha de hoy en formato YYYY-MM-DD
 const getHoy = () => {
@@ -26,6 +40,7 @@ export default function CobrosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsuario, setSelectedUsuario] = useState<string>('');
   const [selectedFormaPago, setSelectedFormaPago] = useState<string>('');
+  const [selectedEstado, setSelectedEstado] = useState<string>('');
   const [selectedSucursal, setSelectedSucursal] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState(getHoy());
   const [fechaFin, setFechaFin] = useState(getHoy());
@@ -42,6 +57,18 @@ export default function CobrosPage() {
   const [usuariosList, setUsuariosList] = useState<Usuario[]>([]);
   const [editUsuarioId, setEditUsuarioId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Editar forma de pago
+  const [editingFormaPagoCobro, setEditingFormaPagoCobro] = useState<Cobro | null>(null);
+  const [editFormaPagoValue, setEditFormaPagoValue] = useState('');
+  
+  // Campos extra para forma de pago
+  const [editChequeBanco, setEditChequeBanco] = useState('');
+  const [editChequeBancoOtro, setEditChequeBancoOtro] = useState('');
+  const [editChequeNumero, setEditChequeNumero] = useState('');
+  const [editTipoTarjeta, setEditTipoTarjeta] = useState('');
+  
+  const [savingFormaPago, setSavingFormaPago] = useState(false);
   
   // Listas únicas
   const [usuarios, setUsuarios] = useState<string[]>([]);
@@ -54,7 +81,7 @@ export default function CobrosPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, selectedSucursal, fechaInicio, fechaFin]);
+  }, [cobros, searchTerm, selectedUsuario, selectedFormaPago, selectedSucursal, fechaInicio, fechaFin, selectedEstado]);
 
   const fetchUsuarios = async () => {
     try {
@@ -109,6 +136,123 @@ export default function CobrosPage() {
       alert('Error al guardar: ' + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEditFormaPago = (cobro: Cobro) => {
+    setEditingFormaPagoCobro(cobro);
+    setEditFormaPagoValue(cobro.formaPago || 'efectivo');
+    
+    // Rellenar campos preexistentes si los tiene
+    if (cobro.formaPago === 'cheque' && cobro.datosCheque) {
+      if (BANCOS_ECUADOR.includes(cobro.datosCheque.banco)) {
+        setEditChequeBanco(cobro.datosCheque.banco);
+        setEditChequeBancoOtro('');
+      } else {
+        setEditChequeBanco('Otros');
+        setEditChequeBancoOtro(cobro.datosCheque.banco);
+      }
+      setEditChequeNumero(cobro.datosCheque.numeroCheque || '');
+    } else {
+      setEditChequeBanco('');
+      setEditChequeBancoOtro('');
+      setEditChequeNumero('');
+    }
+    
+    if (cobro.formaPago === 'tarjeta' && cobro.tipoTarjeta) {
+      setEditTipoTarjeta(cobro.tipoTarjeta);
+    } else {
+      setEditTipoTarjeta('');
+    }
+  };
+
+  const handleSaveFormaPago = async () => {
+    if (!editingFormaPagoCobro?.id) return;
+    
+    // Validaciones básicas según la forma de pago
+    if (editFormaPagoValue === 'cheque') {
+      if (editChequeBanco === 'Otros' && !editChequeBancoOtro.trim()) {
+        alert('Debe ingresar el nombre del banco');
+        return;
+      }
+      if (!editChequeNumero.trim()) {
+        alert('Debe ingresar el número de cheque');
+        return;
+      }
+    }
+    
+    if (editFormaPagoValue === 'tarjeta' && !editTipoTarjeta) {
+      alert('Debe seleccionar el tipo de tarjeta');
+      return;
+    }
+
+    setSavingFormaPago(true);
+    
+    // Preparar objeto de envío con variables extra dependiendo de la forma elegida
+    const bancoFinal = editChequeBanco === 'Otros' ? editChequeBancoOtro.trim() : editChequeBanco;
+    const datosCheque = editFormaPagoValue === 'cheque' 
+      ? { banco: bancoFinal, numeroCheque: editChequeNumero, valor: editingFormaPagoCobro.monto } 
+      : null;
+    const tipoTarjeta = editFormaPagoValue === 'tarjeta' ? editTipoTarjeta : null;
+
+    try {
+      const res = await fetch('/api/cobros', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingFormaPagoCobro.id,
+          formaPago: editFormaPagoValue,
+          datosCheque,
+          tipoTarjeta,
+        }),
+      });
+      if (!res.ok) throw new Error('Error al guardar forma de pago');
+      
+      setCobros(prev =>
+        prev.map(c =>
+          c.id === editingFormaPagoCobro.id
+            ? { 
+                ...c, 
+                formaPago: editFormaPagoValue as 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta',
+                datosCheque: editFormaPagoValue === 'cheque' ? datosCheque as any : undefined,
+                tipoTarjeta: editFormaPagoValue === 'tarjeta' ? tipoTarjeta as string : undefined,
+              }
+            : c
+        )
+      );
+      setEditingFormaPagoCobro(null);
+    } catch (err: any) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      setSavingFormaPago(false);
+    }
+  };
+
+  const handleAnularCobro = async (cobroId: string) => {
+    if (!window.confirm('¿Está seguro de que desea anular este cobro? Esta acción no se puede deshacer y evitará que el cobro se sincronice.')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/cobros', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: cobroId,
+          anulado: true,
+        }),
+      });
+      if (!res.ok) throw new Error('Error al anular el cobro');
+      
+      setCobros(prev =>
+        prev.map(c =>
+          c.id === cobroId
+            ? { ...c, anulado: true, syncStatus: 'anulado' }
+            : c
+        )
+      );
+    } catch (err: any) {
+      alert('Error anular el cobro: ' + err.message);
     }
   };
 
@@ -170,6 +314,11 @@ export default function CobrosPage() {
       filtered = filtered.filter(c => c.formaPago === selectedFormaPago);
     }
 
+    // Filtro por estado
+    if (selectedEstado) {
+      filtered = filtered.filter(c => (c.syncStatus || 'pending') === selectedEstado);
+    }
+
     // Filtro por fecha inicio (desde las 00:00:00)
     if (fechaInicio) {
       const [year, month, day] = fechaInicio.split('-').map(Number);
@@ -209,6 +358,7 @@ export default function CobrosPage() {
     setSearchTerm('');
     setSelectedUsuario('');
     setSelectedFormaPago('');
+    setSelectedEstado('');
     setSelectedSucursal('');
     setFechaInicio(getHoy());
     setFechaFin(getHoy());
@@ -388,6 +538,25 @@ export default function CobrosPage() {
             </div>
           </div>
 
+          {/* Estado */}
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <select
+              value={selectedEstado}
+              onChange={(e) => setSelectedEstado(e.target.value)}
+              className="w-full pl-10 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white truncate"
+            >
+              <option value="">Todos los estados</option>
+              <option value="synced">Sincronizado</option>
+              <option value="pending">Pendiente</option>
+              <option value="error">Error</option>
+              <option value="anulado">Anulado</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+              <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+            </div>
+          </div>
+
           {/* Sucursal */}
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
@@ -479,13 +648,15 @@ export default function CobrosPage() {
                     </div>
                     {cobro.syncStatus && (
                       <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
-                        cobro.syncStatus === 'synced' 
-                          ? 'bg-green-100 text-green-700' 
+                        cobro.syncStatus === 'synced'
+                          ? 'bg-green-100 text-green-700'
                           : cobro.syncStatus === 'pending'
                           ? 'bg-yellow-100 text-yellow-700'
+                          : cobro.syncStatus === 'anulado'
+                          ? 'bg-gray-100 text-gray-700'
                           : 'bg-red-100 text-red-700'
                       }`}>
-                        {cobro.syncStatus === 'synced' ? 'Sincronizado' : cobro.syncStatus === 'pending' ? 'Pendiente' : 'Error'}
+                        {cobro.syncStatus === 'synced' ? 'Sincronizado' : cobro.syncStatus === 'pending' ? 'Pendiente' : cobro.syncStatus === 'anulado' ? 'Anulado' : 'Error'}
                       </span>
                     )}
                   </div>
@@ -530,9 +701,18 @@ export default function CobrosPage() {
 
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Forma de Pago:</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getFormaPagoColor(cobro.formaPago)}`}>
-                        {getFormaPagoLabel(cobro.formaPago)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getFormaPagoColor(cobro.formaPago)}`}>
+                          {getFormaPagoLabel(cobro.formaPago)}
+                        </span>
+                        <button
+                          onClick={() => handleEditFormaPago(cobro)}
+                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded"
+                          title="Editar forma de pago"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
 
                     {cobro.formaPago === 'cheque' && cobro.datosCheque && (
@@ -642,7 +822,7 @@ export default function CobrosPage() {
                   )}
 
                   {/* Botón de imprimir ticket */}
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="pt-4 border-t border-gray-200 space-y-2">
                     <button
                       onClick={async () => {
                         const id = cobro.id || cobro.numeroComprobante || '';
@@ -671,6 +851,21 @@ export default function CobrosPage() {
                         </>
                       )}
                     </button>
+
+                    {!cobro.anulado ? (
+                      <button
+                        onClick={() => handleAnularCobro(cobro.id!)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-2 bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium rounded-lg transition-colors"
+                      >
+                        <Ban className="h-4 w-4" />
+                        Anular Cobro
+                      </button>
+                    ) : (
+                      <div className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-2 bg-gray-100 text-gray-500 text-sm font-medium rounded-lg">
+                        <Ban className="h-4 w-4" />
+                        Cobro Anulado
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -795,6 +990,107 @@ export default function CobrosPage() {
         </div>
       )}
 
+      {/* Modal Editar Forma de Pago */}
+      {editingFormaPagoCobro && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Editar Forma de Pago</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Recibo de <span className="font-medium text-gray-800">{editingFormaPagoCobro.clienteNombre}</span>
+            </p>
+            <div className="mb-5 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pago</label>
+                <select
+                  value={editFormaPagoValue}
+                  onChange={(e) => setEditFormaPagoValue(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="efectivo">Efectivo</option>
+                  <option value="transferencia">Transferencia</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
+
+              {editFormaPagoValue === 'cheque' && (
+                <div className="space-y-3 pt-2 max-h-[30vh] overflow-y-auto">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Banco emisor</label>
+                    <select
+                      value={editChequeBanco}
+                      onChange={(e) => setEditChequeBanco(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Seleccionar banco...</option>
+                      {BANCOS_ECUADOR.map((banco) => (
+                        <option key={banco} value={banco}>{banco}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {editChequeBanco === 'Otros' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del banco</label>
+                      <input
+                        type="text"
+                        value={editChequeBancoOtro}
+                        onChange={(e) => setEditChequeBancoOtro(e.target.value)}
+                        placeholder="Especifique el banco"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Número de cheque</label>
+                    <input
+                      type="text"
+                      value={editChequeNumero}
+                      onChange={(e) => setEditChequeNumero(e.target.value)}
+                      placeholder="Ej. 123456"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editFormaPagoValue === 'tarjeta' && (
+                <div className="pt-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tarjeta</label>
+                  <select
+                    value={editTipoTarjeta}
+                    onChange={(e) => setEditTipoTarjeta(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Seleccionar tipo...</option>
+                    {TIPOS_TARJETA.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setEditingFormaPagoCobro(null)}
+                disabled={savingFormaPago}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveFormaPago}
+                disabled={savingFormaPago || !editFormaPagoValue}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                {savingFormaPago ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Imagen */}
       {selectedImage && (
         <div
@@ -820,3 +1116,8 @@ export default function CobrosPage() {
     </div>
   );
 }
+
+
+
+
+
