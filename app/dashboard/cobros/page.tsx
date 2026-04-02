@@ -69,6 +69,10 @@ export default function CobrosPage() {
   const [editTipoTarjeta, setEditTipoTarjeta] = useState('');
   
   const [savingFormaPago, setSavingFormaPago] = useState(false);
+
+  // Modal de confirmación para anular
+  const [modalAnularCobro, setModalAnularCobro] = useState<string | null>(null);
+  const [anulandoCobro, setAnulandoCobro] = useState(false);
   
   // Listas únicas
   const [usuarios, setUsuarios] = useState<string[]>([]);
@@ -229,16 +233,19 @@ export default function CobrosPage() {
   };
 
   const handleAnularCobro = async (cobroId: string) => {
-    if (!window.confirm('¿Está seguro de que desea anular este cobro? Esta acción no se puede deshacer y evitará que el cobro se sincronice.')) {
-      return;
-    }
-    
+    setModalAnularCobro(cobroId);
+  };
+
+  const confirmarAnularCobro = async () => {
+    if (!modalAnularCobro) return;
+
+    setAnulandoCobro(true);
     try {
       const res = await fetch('/api/cobros', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: cobroId,
+          id: modalAnularCobro,
           anulado: true,
         }),
       });
@@ -246,13 +253,16 @@ export default function CobrosPage() {
       
       setCobros(prev =>
         prev.map(c =>
-          c.id === cobroId
+          c.id === modalAnularCobro
             ? { ...c, anulado: true, syncStatus: 'anulado' }
             : c
         )
       );
+      setModalAnularCobro(null);
     } catch (err: any) {
       alert('Error anular el cobro: ' + err.message);
+    } finally {
+      setAnulandoCobro(false);
     }
   };
 
@@ -412,16 +422,17 @@ export default function CobrosPage() {
   };
 
   // Estadísticas
-  const totalCobros = filteredCobros.length;
-  const totalMonto = filteredCobros.reduce((sum, c) => sum + c.monto, 0);
-  const totalEfectivo = filteredCobros.filter(c => c.formaPago === 'efectivo').reduce((sum, c) => sum + c.monto, 0);
-  const totalTransferencias = filteredCobros.filter(c => c.formaPago === 'transferencia').reduce((sum, c) => sum + c.monto, 0);
+  const activeCobros = filteredCobros.filter(c => !c.anulado);
+  const totalCobros = activeCobros.length;
+  const totalMonto = activeCobros.reduce((sum, c) => sum + c.monto, 0);
+  const totalEfectivo = activeCobros.filter(c => c.formaPago === 'efectivo').reduce((sum, c) => sum + c.monto, 0);
+  const totalTransferencias = activeCobros.filter(c => c.formaPago === 'transferencia').reduce((sum, c) => sum + c.monto, 0);
 
   // Paginación
-  const totalPages = Math.ceil(filteredCobros.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(activeCobros.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentCobros = filteredCobros.slice(startIndex, endIndex);
+  const currentCobros = activeCobros.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6">
@@ -625,7 +636,7 @@ export default function CobrosPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-600">Error: {error}</p>
         </div>
-      ) : filteredCobros.length === 0 ? (
+      ) : activeCobros.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
           <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 text-lg">No se encontraron cobros</p>
@@ -876,7 +887,7 @@ export default function CobrosPage() {
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 mt-6 sm:mt-8">
               <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
-                Mostrando {startIndex + 1}-{Math.min(endIndex, filteredCobros.length)} de {filteredCobros.length}
+                Mostrando {startIndex + 1}-{Math.min(endIndex, activeCobros.length)} de {activeCobros.length}
               </div>
               
               <div className="flex items-center gap-2 order-1 sm:order-2">
@@ -1113,9 +1124,47 @@ export default function CobrosPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Confirmar Anular Cobro */}
+      {modalAnularCobro && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Ban className="h-6 w-6 text-red-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Confirmar Anulación</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              ¿Está seguro de que desea anular este cobro? Esta acción no se puede deshacer y evitará que el cobro se sincronice.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setModalAnularCobro(null)}
+                disabled={anulandoCobro}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarAnularCobro}
+                disabled={anulandoCobro}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                {anulandoCobro ? 'Anulando...' : 'Sí, Anular'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
+
+
+
 
 
 
