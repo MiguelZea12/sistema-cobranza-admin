@@ -421,8 +421,11 @@ export default function CobrosPage() {
     return colors[formaPago] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  // Estadísticas
-  const activeCobros = filteredCobros.filter(c => !c.anulado);
+  // Estadísticas — cuando se filtra explícitamente por "anulado" se muestran esos cobros;
+  // en cualquier otro caso se excluyen los anulados de la vista y totales.
+  const activeCobros = selectedEstado === 'anulado'
+    ? filteredCobros
+    : filteredCobros.filter(c => !c.anulado);
   const totalCobros = activeCobros.length;
   const totalMonto = activeCobros.reduce((sum, c) => sum + c.monto, 0);
   const totalEfectivo = activeCobros.filter(c => c.formaPago === 'efectivo').reduce((sum, c) => sum + c.monto, 0);

@@ -204,9 +204,150 @@ export async function PATCH(request: NextRequest) {
       updateData.anulado = anulado;
       if (anulado) {
         updateData.syncStatus = 'anulado';
+
+        // Revertir saldos del cliente y letras del contrato
+        const cobroSnap = await db.collection('cobros').doc(id).get();
+        if (cobroSnap.exists) {
+          const cobroData = cobroSnap.data()!;
+          const {
+            clienteId,
+            monto: montoRevertir,
+            contratoId,
+            letrasPagadas: letrasPagadasCobro,
+          } = cobroData;
+
+          if (clienteId) {
+            const clienteSnap = await db.collection('clientes').doc(clienteId).get();
+            if (clienteSnap.exists) {
+              const clienteData = clienteSnap.data()!;
+              const clienteUpdate: any = {
+                // Devolver el monto cobrado al saldo pendiente del cliente
+                saldoPendiente: (clienteData.saldoPendiente || 0) + (montoRevertir || 0),
+                updatedAt: FieldValue.serverTimestamp(),
+              };
+
+              // Revertir letras del contrato si hay datos suficientes
+              if (
+                contratoId &&
+                Array.isArray(letrasPagadasCobro) &&
+                letrasPagadasCobro.length > 0 &&
+                Array.isArray(clienteData.contratos)
+              ) {
+                const contratos = clienteData.contratos.map((c: any) => ({ ...c }));
+                const contratoIdx = contratos.findIndex(
+                  (c: any) => c.transaccion === contratoId,
+                );
+
+                if (contratoIdx !== -1) {
+                  const contrato = { ...contratos[contratoIdx] };
+                  const letras: any[] = Array.isArray(contrato.letras)
+                    ? contrato.letras.map((l: any) => ({ ...l }))
+                    : [];
+
+                  let montoTotalRevertido = 0;
+                  const hoy = new Date();
+
+                  // Revertir cada letra pagada en este cobro
+                  for (const letraPagada of letrasPagadasCobro as Array<{ numero: number; monto: number }>) {
+                    const letraIdx = letras.findIndex((l: any) => l.numero === letraPagada.numero);
+                    if (letraIdx !== -1) {
+                      const letra = letras[letraIdx];
+                      const nuevoPago = Math.max(0, (letra.pago || 0) - letraPagada.monto);
+                      const nuevoPendiente = Math.max(0, (letra.valor || 0) - nuevoPago);
+
+                      // Recalcular estado de la letra
+                      let nuevoEstado: string;
+                      if (nuevoPendiente <= 0) {
+                        nuevoEstado = 'pagado';
+                      } else if (nuevoPago > 0) {
+                        nuevoEstado = 'parcial';
+                      } else {
+                        // Determinar si está vencida
+                        const fv = letra.fechaVencimiento;
+                        let fechaVenc: Date | null = null;
+                        if (fv) {
+                          if (typeof fv.toDate === 'function') {
+                            fechaVenc = fv.toDate();
+                          } else if (fv._seconds) {
+                            fechaVenc = new Date(fv._seconds * 1000);
+                          } else {
+                            fechaVenc = new Date(fv);
+                          }
+                        }
+                        nuevoEstado =
+                          fechaVenc && fechaVenc < hoy && letra.numero > 0
+                            ? 'vencido'
+                            : 'pendiente';
+                      }
+
+                      letras[letraIdx] = {
+                        ...letra,
+                        pago: nuevoPago,
+                        pendiente: nuevoPendiente,
+                        estado: nuevoEstado,
+                      };
+                      montoTotalRevertido += letraPagada.monto;
+                    }
+                  }
+
+                  // Recalcular totales del contrato a partir de las letras revertidas
+                  let saldoVencidoContrato = 0;
+                  let saldoPorVencerContrato = 0;
+                  let letrasPagadasCount = 0;
+
+                  for (const letra of letras) {
+                    if (letra.estado === 'pagado') {
+                      letrasPagadasCount++;
+                    } else if ((letra.pendiente || 0) > 0) {
+                      const fv = letra.fechaVencimiento;
+                      let fechaVenc: Date | null = null;
+                      if (fv) {
+                        if (typeof fv.toDate === 'function') {
+                          fechaVenc = fv.toDate();
+                        } else if (fv._seconds) {
+                          fechaVenc = new Date(fv._seconds * 1000);
+                        } else {
+                          fechaVenc = new Date(fv);
+                        }
+                      }
+                      if (fechaVenc && fechaVenc < hoy && letra.numero > 0) {
+                        saldoVencidoContrato += letra.pendiente;
+                      } else {
+                        saldoPorVencerContrato += letra.pendiente;
+                      }
+                    }
+                  }
+
+                  contratos[contratoIdx] = {
+                    ...contrato,
+                    letras,
+                    pago: Math.max(0, (contrato.pago || 0) - montoTotalRevertido),
+                    saldoVencido: saldoVencidoContrato,
+                    saldoPorVencer: saldoPorVencerContrato,
+                    letrasPagadas: letrasPagadasCount,
+                  };
+
+                  // Recalcular saldoVencido y saldoPorVencer totales del cliente
+                  let totalSaldoVencido = 0;
+                  let totalSaldoPorVencer = 0;
+                  for (const c of contratos) {
+                    totalSaldoVencido += c.saldoVencido || 0;
+                    totalSaldoPorVencer += c.saldoPorVencer || 0;
+                  }
+
+                  clienteUpdate.contratos = contratos;
+                  clienteUpdate.saldoVencido = totalSaldoVencido;
+                  clienteUpdate.saldoPorVencer = totalSaldoPorVencer;
+                }
+              }
+
+              await db.collection('clientes').doc(clienteId).update(clienteUpdate);
+            }
+          }
+        }
       }
     }
-    
+
     if (formaPago !== undefined) {
       updateData.formaPago = formaPago;
       
