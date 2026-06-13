@@ -243,6 +243,8 @@ function CobroModal({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Ref sincrónico para bloquear doble ejecución antes de que React re-renderice
+  const procesandoRef = useRef(false);
 
   const seleccionarContrato = useCallback((c: ContratoCliente) => {
     setContratoSeleccionado(c);
@@ -288,6 +290,13 @@ function CobroModal({
   };
 
   const procesarPago = async () => {
+    // Bloqueo sincrónico: evita doble registro si el usuario hace clic dos veces
+    // antes de que React deshabilite el botón (setState es asíncrono).
+    // El ref se libera siempre en el bloque finally exterior.
+    if (procesandoRef.current) return;
+    procesandoRef.current = true;
+
+    try {
     setError(null);
     const letrasPagadasArray = Array.from(letrasSeleccionadas.entries()).map(([numero, monto]) => ({
       numero,
@@ -433,6 +442,7 @@ function CobroModal({
         contratoId: contratoSeleccionado?.transaccion,
         contratoReferencia: contratoSeleccionado?.referencia,
         contratoLinea,
+        contratoSucursal: contratoSeleccionado?.sucursal, // Sucursal del contrato (ID numérico de SQL)
         letrasPagadas: letrasPagadasArray,
         totalLetras: contratoSeleccionado?.totalLetras,
         datosCheque,
@@ -472,6 +482,12 @@ function CobroModal({
       setError(err.message || 'Ocurrió un error al procesar el pago');
     } finally {
       setProcesando(false);
+    }
+
+    } finally {
+      // Siempre liberar el bloqueo: tanto si la validación retornó
+      // anticipadamente como si ocurrió un error en el flujo asíncrono.
+      procesandoRef.current = false;
     }
   };
 
@@ -573,23 +589,32 @@ function CobroModal({
                   const seleccionada = letrasSeleccionadas.has(letra.numero);
                   const monto = letrasSeleccionadas.get(letra.numero) ?? '';
                   return (
-                    <div key={letra.numero} className="bg-white">
+                    <div
+                      key={letra.numero}
+                      className={`transition-colors ${seleccionada ? 'bg-sky-50' : 'bg-white'}`}
+                    >
                       <button
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left transition-colors"
+                        type="button"
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 text-left transition-colors ${
+                          seleccionada ? 'hover:bg-sky-100' : 'hover:bg-gray-50'
+                        }`}
                         onClick={() => toggleLetra(letra)}
                       >
                         <div
-                          className={`h-5 w-5 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
-                            seleccionada ? 'bg-sky-500 border-sky-500' : 'border-gray-300'
+                          className={`h-7 w-7 shrink-0 rounded-md border-[3px] flex items-center justify-center transition-all shadow-sm ${
+                            seleccionada
+                              ? 'bg-sky-600 border-sky-600 ring-2 ring-sky-300 ring-offset-1'
+                              : 'bg-white border-gray-400 hover:border-sky-400'
                           }`}
+                          aria-hidden
                         >
-                          {seleccionada && <Check className="h-3 w-3 text-white" />}
+                          {seleccionada && <Check className="h-4 w-4 text-white stroke-[3]" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className={`text-sm font-semibold ${seleccionada ? 'text-sky-900' : 'text-gray-800'}`}>
                             {letra.numero === 0 ? 'ENTRADA' : `Letra #${letra.numero}`}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className={`text-xs mt-0.5 ${seleccionada ? 'text-sky-700' : 'text-gray-500'}`}>
                             Pendiente: {formatCurrency(letra.pendiente)}
                           </p>
                         </div>
@@ -605,7 +630,7 @@ function CobroModal({
                         </div>
                       </button>
                       {seleccionada && (
-                        <div className="px-4 pb-3 bg-sky-50">
+                        <div className="px-4 pb-3 pl-[3.75rem] bg-sky-50 border-t border-sky-100">
                           <label className="text-xs text-sky-700 font-medium block mb-1">
                             Monto (Máx: {formatCurrency(letra.pendiente)}):
                           </label>

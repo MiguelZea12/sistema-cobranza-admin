@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       contratoId,
       contratoReferencia,
       contratoLinea,
+      contratoSucursal,
       letrasPagadas,
       totalLetras,
       numeroComprobante,
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
     if (contratoId) cobroData.contratoId = contratoId;
     if (contratoReferencia) cobroData.contratoReferencia = contratoReferencia;
     if (contratoLinea) cobroData.contratoLinea = contratoLinea;
+    if (contratoSucursal !== undefined && contratoSucursal !== null) cobroData.contratoSucursal = contratoSucursal;
     if (observaciones) cobroData.observaciones = observaciones;
     if (imageUrl) cobroData.imageUrl = imageUrl;
     if (letrasPagadas && letrasPagadas.length > 0) cobroData.letrasPagadas = letrasPagadas;
@@ -104,10 +106,11 @@ export async function POST(request: NextRequest) {
     if (cobrador) cobroData.cobrador = cobrador;
     if (createdBy) cobroData.createdBy = createdBy;
 
-    // Guardar cobro en Firestore
-    const cobroRef = await db.collection('cobros').add(cobroData);
+    // Guardar cobro Y actualizar cliente en un batch atómico para evitar
+    // que un fallo parcial deje el saldo inconsistente y genere doble cobro.
+    const cobroRef = db.collection('cobros').doc();
+    const clienteRef = db.collection('clientes').doc(clienteId);
 
-    // Actualizar saldos del cliente
     const clienteUpdateData: any = {
       saldoPendiente: nuevoSaldoPendiente,
       saldoVencido: nuevoSaldoVencido,
@@ -118,7 +121,10 @@ export async function POST(request: NextRequest) {
       clienteUpdateData.contratos = contratosActualizados;
     }
 
-    await db.collection('clientes').doc(clienteId).update(clienteUpdateData);
+    const batch = db.batch();
+    batch.set(cobroRef, cobroData);
+    batch.update(clienteRef, clienteUpdateData);
+    await batch.commit();
 
     return NextResponse.json({ id: cobroRef.id, success: true });
   } catch (error: any) {

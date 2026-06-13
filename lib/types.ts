@@ -82,6 +82,7 @@ export interface ContratoCliente {
   fechaEmision: Date;
   referencia?: string;
   linea?: string; // Producto / línea (de SQL)
+  sucursal?: number; // Sucursal del contrato (ID numérico de SQL Anywhere, ej: 1=Jipijapa, 2=Esmeralda)
   totalContrato: number;
   pago: number; // Total pagado del contrato
   nc: number; // Nota de credito del contrato
@@ -134,7 +135,8 @@ export interface Cobro {
   latitude?: number;
   longitude?: number;
   createdBy?: string;
-  sucursal?: string;
+  sucursal?: string;         // Sucursal del cobrador (nombre)
+  contratoSucursal?: number; // Sucursal del contrato (ID numérico directo de SQL Anywhere)
   caja?: string;
   cobrador?: string;
   createdAt?: Date;
